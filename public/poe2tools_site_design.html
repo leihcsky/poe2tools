@@ -1,0 +1,508 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-size: 14px; padding: 1rem 0; }
+
+  .tab-bar {
+    display: flex; gap: 4px; margin-bottom: 20px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    padding-bottom: 0;
+  }
+  .tab {
+    padding: 8px 16px; font-size: 13px; cursor: pointer;
+    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+    color: var(--color-text-secondary);
+    border: 0.5px solid transparent;
+    border-bottom: none;
+    transition: all .12s;
+    margin-bottom: -0.5px;
+  }
+  .tab:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .tab.active {
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-tertiary);
+    border-bottom-color: var(--color-background-primary);
+    font-weight: 500;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .sec-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: .05em; text-transform: uppercase; margin: 0 0 10px; }
+  .divider { height: 0.5px; background: var(--color-border-tertiary); margin: 20px 0; }
+
+  /* ── NAV MOCKUP ── */
+  .nav-frame {
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .nav-bar {
+    display: flex; align-items: center; gap: 0;
+    padding: 0 16px;
+    background: var(--color-background-primary);
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    height: 48px;
+  }
+  .nav-logo { font-size: 15px; font-weight: 500; margin-right: 28px; color: var(--color-text-primary); }
+  .nav-logo span { color: #378ADD; }
+  .nav-items { display: flex; gap: 2px; flex: 1; }
+  .nav-item {
+    padding: 6px 12px; font-size: 13px; border-radius: var(--border-radius-md);
+    color: var(--color-text-secondary); cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    position: relative;
+  }
+  .nav-item:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .nav-item.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
+  .nav-badge { font-size: 9px; padding: 1px 5px; border-radius: 99px; background: #E1F5EE; color: #0F6E56; border: 0.5px solid #5DCAA5; font-weight: 500; }
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+  .nav-search { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 12px; color: var(--color-text-tertiary); }
+  .nav-version { font-size: 11px; padding: 3px 8px; border-radius: 99px; background: #FAEEDA; color: #854F0B; border: 0.5px solid #FAC775; font-weight: 500; }
+
+  .dropdown-demo {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    padding: 16px;
+    background: var(--color-background-primary);
+  }
+  .dd-section { }
+  .dd-section-title { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+  .dd-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 8px; border-radius: var(--border-radius-md); cursor: pointer; }
+  .dd-item:hover { background: var(--color-background-secondary); }
+  .dd-icon { width: 28px; height: 28px; border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+  .dd-text-wrap { flex: 1; }
+  .dd-name { font-size: 12px; font-weight: 500; }
+  .dd-desc { font-size: 11px; color: var(--color-text-secondary); margin-top: 1px; }
+  .dd-new { font-size: 9px; padding: 1px 5px; border-radius: 99px; background: #FCEBEB; color: #A32D2D; border: 0.5px solid #F09595; margin-left: 4px; font-weight: 500; vertical-align: middle; }
+
+  .nav-note { font-size: 12px; color: var(--color-text-secondary); line-height: 1.6; padding: 8px 12px; background: var(--color-background-info); border-left: 2px solid var(--color-border-info); border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; }
+
+  /* ── HOMEPAGE MOCKUP ── */
+  .page-frame {
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    background: var(--color-background-primary);
+  }
+  .hero {
+    padding: 32px 24px 24px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-secondary);
+  }
+  .hero-eyebrow { font-size: 11px; font-weight: 500; color: #185FA5; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .hero-title { font-size: 22px; font-weight: 500; line-height: 1.3; margin-bottom: 8px; }
+  .hero-sub { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; max-width: 480px; margin-bottom: 16px; }
+  .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-primary { padding: 7px 16px; font-size: 13px; border-radius: var(--border-radius-md); background: #185FA5; color: white; border: none; cursor: pointer; font-weight: 500; }
+  .btn-secondary { padding: 7px 16px; font-size: 13px; border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); cursor: pointer; }
+  .hero-meta { display: flex; gap: 16px; margin-top: 16px; }
+  .hero-meta-item { font-size: 12px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 4px; }
+
+  .section-wrap { padding: 20px 24px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .section-title { font-size: 14px; font-weight: 500; }
+  .section-link { font-size: 12px; color: #185FA5; cursor: pointer; }
+
+  .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .tool-card {
+    border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg);
+    padding: 12px 14px; cursor: pointer; transition: background .1s;
+  }
+  .tool-card:hover { background: var(--color-background-secondary); }
+  .tool-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .tool-icon { width: 30px; height: 30px; border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .tool-name { font-size: 13px; font-weight: 500; }
+  .tool-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+  .tool-tag { font-size: 10px; padding: 1px 6px; border-radius: 99px; border: 0.5px solid; font-weight: 500; margin-top: 6px; display: inline-block; }
+
+  .guides-list { display: flex; flex-direction: column; gap: 0; }
+  .guide-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); cursor: pointer; }
+  .guide-row:last-child { border-bottom: none; }
+  .guide-row:hover .guide-title { color: #185FA5; }
+  .guide-cat { font-size: 10px; padding: 2px 7px; border-radius: 99px; border: 0.5px solid; font-weight: 500; flex-shrink: 0; width: 70px; text-align: center; }
+  .guide-title { font-size: 13px; font-weight: 500; flex: 1; }
+  .guide-meta { font-size: 11px; color: var(--color-text-tertiary); flex-shrink: 0; }
+
+  .db-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .db-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; cursor: pointer; text-align: center; }
+  .db-card:hover { background: var(--color-background-secondary); }
+  .db-count { font-size: 20px; font-weight: 500; }
+  .db-label { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+
+  .version-bar { display: flex; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-background-secondary); font-size: 12px; color: var(--color-text-secondary); }
+  .version-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
+
+  /* ── GUIDES PAGE MOCKUP ── */
+  .guides-page { padding: 0; }
+  .guides-hero { padding: 20px 24px 16px; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .guides-hero h2 { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+  .guides-hero p { font-size: 13px; color: var(--color-text-secondary); }
+
+  .filter-bar { display: flex; gap: 6px; padding: 12px 24px; border-bottom: 0.5px solid var(--color-border-tertiary); flex-wrap: wrap; }
+  .filter-chip { font-size: 12px; padding: 4px 12px; border-radius: 99px; border: 0.5px solid var(--color-border-secondary); cursor: pointer; color: var(--color-text-secondary); }
+  .filter-chip.active { background: #185FA5; color: white; border-color: #185FA5; font-weight: 500; }
+  .filter-chip:hover:not(.active) { background: var(--color-background-secondary); }
+
+  .guides-body { display: grid; grid-template-columns: 1fr 220px; gap: 0; }
+  .guides-main { padding: 16px 24px; border-right: 0.5px solid var(--color-border-tertiary); }
+  .guides-sidebar { padding: 16px; }
+
+  .featured-card {
+    border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg);
+    padding: 16px; margin-bottom: 12px; cursor: pointer;
+    border-left: 2px solid #378ADD;
+  }
+  .featured-card:hover { background: var(--color-background-secondary); }
+  .featured-eyebrow { font-size: 11px; font-weight: 500; color: #185FA5; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+  .featured-title { font-size: 15px; font-weight: 500; margin-bottom: 5px; }
+  .featured-excerpt { font-size: 12px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 8px; }
+  .featured-footer { display: flex; align-items: center; gap: 10px; }
+  .art-tag { font-size: 10px; padding: 2px 7px; border-radius: 99px; border: 0.5px solid; font-weight: 500; }
+
+  .article-item { display: flex; gap: 12px; padding: 11px 0; border-bottom: 0.5px solid var(--color-border-tertiary); cursor: pointer; }
+  .article-item:last-child { border-bottom: none; }
+  .article-item:hover .article-title { color: #185FA5; }
+  .article-left { flex: 1; }
+  .article-cat { font-size: 10px; padding: 2px 7px; border-radius: 99px; border: 0.5px solid; font-weight: 500; margin-bottom: 5px; display: inline-block; }
+  .article-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .article-excerpt { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+  .article-meta { font-size: 11px; color: var(--color-text-tertiary); margin-top: 5px; }
+  .article-right { width: 70px; height: 54px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); font-size: 20px; }
+
+  .sidebar-section { margin-bottom: 16px; }
+  .sidebar-title { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 8px; }
+  .sidebar-item { font-size: 12px; color: var(--color-text-secondary); padding: 5px 0; border-bottom: 0.5px solid var(--color-border-tertiary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .sidebar-item:hover { color: #185FA5; }
+  .sidebar-item:last-child { border-bottom: none; }
+  .sidebar-count { font-size: 11px; color: var(--color-text-tertiary); }
+
+  .patch-banner { margin: 0 0 12px; padding: 10px 12px; background: #FAEEDA; border-radius: var(--border-radius-md); border: 0.5px solid #FAC775; display: flex; align-items: center; gap: 8px; }
+  .patch-banner-text { font-size: 12px; color: #854F0B; }
+  .patch-banner-text strong { font-weight: 500; }
+</style>
+
+<h2 class="sr-only">POE2Tools 网站设计：菜单结构、首页布局与内容页呈现方式</h2>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="showTab('nav')">菜单结构</div>
+  <div class="tab" onclick="showTab('home')">首页设计</div>
+  <div class="tab" onclick="showTab('guides')">内容区呈现</div>
+</div>
+
+<!-- TAB 1: 菜单结构 -->
+<div class="tab-panel active" id="tab-nav">
+  <p class="sec-label">导航栏</p>
+  <div class="nav-frame">
+    <div class="nav-bar">
+      <div class="nav-logo">POE2<span>Tools</span></div>
+      <div class="nav-items">
+        <div class="nav-item active">
+          <i class="ti ti-home" aria-hidden="true"></i> 首页
+        </div>
+        <div class="nav-item">
+          <i class="ti ti-tool" aria-hidden="true"></i> 工具
+          <i class="ti ti-chevron-down" aria-hidden="true" style="font-size:11px"></i>
+        </div>
+        <div class="nav-item">
+          <i class="ti ti-book" aria-hidden="true"></i> 攻略
+          <i class="ti ti-chevron-down" aria-hidden="true" style="font-size:11px"></i>
+        </div>
+        <div class="nav-item">
+          <i class="ti ti-database" aria-hidden="true"></i> 数据库
+          <i class="ti ti-chevron-down" aria-hidden="true" style="font-size:11px"></i>
+        </div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-search"><i class="ti ti-search" aria-hidden="true" style="font-size:13px"></i> 搜索...</div>
+        <div class="nav-version">Patch 0.5</div>
+      </div>
+    </div>
+    <div class="dropdown-demo">
+      <div class="dd-section">
+        <div class="dd-section-title">工具</div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#E1F5EE"><i class="ti ti-puzzle" style="color:#0F6E56;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">符文组合速查器 <span class="dd-new">0.5</span></div>
+            <div class="dd-desc">Runes of Aldur 最优组合</div>
+          </div>
+        </div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#E6F1FB"><i class="ti ti-shield" style="color:#185FA5;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">Runic Ward 计算器 <span class="dd-new">0.5</span></div>
+            <div class="dd-desc">Ward 防御值估算</div>
+          </div>
+        </div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#FAEEDA"><i class="ti ti-flask" style="color:#854F0B;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">Verisium 制作模拟器</div>
+            <div class="dd-desc">制作路径与期望成本</div>
+          </div>
+        </div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#EEEDFE"><i class="ti ti-map" style="color:#534AB7;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">Atlas 规划器</div>
+            <div class="dd-desc">被动树可视化规划</div>
+          </div>
+        </div>
+      </div>
+      <div class="dd-section">
+        <div class="dd-section-title">攻略</div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#EAF3DE"><i class="ti ti-star" style="color:#3B6D11;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">新手入坑指南</div>
+            <div class="dd-desc">从零开始玩 POE2</div>
+          </div>
+        </div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#FAEEDA"><i class="ti ti-trending-up" style="color:#854F0B;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">Build 推荐</div>
+            <div class="dd-desc">0.5 开荒与终局配装</div>
+          </div>
+        </div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#FCEBEB"><i class="ti ti-news" style="color:#A32D2D;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">版本资讯</div>
+            <div class="dd-desc">Patch Notes 解读</div>
+          </div>
+        </div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#E6F1FB"><i class="ti ti-coins" style="color:#185FA5;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">经济与制作</div>
+            <div class="dd-desc">货币、词缀、制作攻略</div>
+          </div>
+        </div>
+      </div>
+      <div class="dd-section">
+        <div class="dd-section-title">数据库</div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#E1F5EE"><i class="ti ti-hexagon" style="color:#0F6E56;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">符文数据库 <span class="dd-new">0.5</span></div>
+            <div class="dd-desc">100+ 符文效果速查</div>
+          </div>
+        </div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#EEEDFE"><i class="ti ti-sparkles" style="color:#534AB7;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">技能宝石数据库</div>
+            <div class="dd-desc">全部宝石属性与搭配</div>
+          </div>
+        </div>
+        <div class="dd-item">
+          <div class="dd-icon" style="background:#FAEEDA"><i class="ti ti-sword" style="color:#854F0B;font-size:15px" aria-hidden="true"></i></div>
+          <div class="dd-text-wrap">
+            <div class="dd-name">独特装备数据库</div>
+            <div class="dd-desc">独特装备属性与获取</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nav-note">
+    <strong>设计说明：</strong>导航采用「mega menu」下拉形式，三列同时展示工具、攻略、数据库所有入口，每个条目带图标和一行描述，用户扫一眼就知道点哪里。右上角版本标签「Patch 0.5」是动态的，每次版本更新改一处即可全站更新。移动端折叠为汉堡菜单，三个区块垂直堆叠展示。
+  </div>
+</div>
+
+<!-- TAB 2: 首页设计 -->
+<div class="tab-panel" id="tab-home">
+  <div class="page-frame">
+    <div class="version-bar">
+      <div class="version-dot"></div>
+      <span>Patch 0.5「Return of the Ancients」数据已更新 · 5月29日上线</span>
+    </div>
+    <div class="hero">
+      <div class="hero-eyebrow">Path of Exile 2 · 工具站</div>
+      <div class="hero-title">找到最强符文组合<br>算清每一点Ward收益</div>
+      <div class="hero-sub">免费在线工具 + 实时更新数据库，帮你在每个版本做出最优决策。0.5 版本数据已就绪。</div>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="sendPrompt('帮我设计符文组合速查器的交互逻辑 ↗')">符文组合速查器 ↗</button>
+        <button class="btn-secondary">0.5 新手入坑指南</button>
+      </div>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><i class="ti ti-tool" aria-hidden="true"></i> 4 个在线工具</div>
+        <div class="hero-meta-item"><i class="ti ti-database" aria-hidden="true"></i> 100+ 符文数据</div>
+        <div class="hero-meta-item"><i class="ti ti-refresh" aria-hidden="true"></i> 每次 Patch 更新</div>
+      </div>
+    </div>
+
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="section-title">热门工具</div>
+        <div class="section-link">全部工具 →</div>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card">
+          <div class="tool-card-head">
+            <div class="tool-icon" style="background:#E1F5EE"><i class="ti ti-puzzle" style="color:#0F6E56" aria-hidden="true"></i></div>
+            <div class="tool-name">符文组合速查器</div>
+          </div>
+          <div class="tool-desc">选择你的符文槽，实时查看最优组合和收益预测</div>
+          <span class="tool-tag" style="background:#E1F5EE;color:#0F6E56;border-color:#5DCAA5">0.5 新机制</span>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-head">
+            <div class="tool-icon" style="background:#E6F1FB"><i class="ti ti-shield" style="color:#185FA5" aria-hidden="true"></i></div>
+            <div class="tool-name">Runic Ward 计算器</div>
+          </div>
+          <div class="tool-desc">输入装备属性，计算有效生命值和 Ward 恢复曲线</div>
+          <span class="tool-tag" style="background:#E6F1FB;color:#185FA5;border-color:#85B7EB">防御优化</span>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-head">
+            <div class="tool-icon" style="background:#FAEEDA"><i class="ti ti-flask" style="color:#854F0B" aria-hidden="true"></i></div>
+            <div class="tool-name">Verisium 制作模拟器</div>
+          </div>
+          <div class="tool-desc">模拟制作路径期望消耗，找到最高性价比方案</div>
+          <span class="tool-tag" style="background:#FAEEDA;color:#854F0B;border-color:#FAC775">制作系统</span>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-head">
+            <div class="tool-icon" style="background:#EEEDFE"><i class="ti ti-map" style="color:#534AB7" aria-hidden="true"></i></div>
+            <div class="tool-name">Atlas 规划器</div>
+          </div>
+          <div class="tool-desc">400+ 节点 Atlas 被动树可视化规划，支持路线预设</div>
+          <span class="tool-tag" style="background:#EEEDFE;color:#534AB7;border-color:#AFA9EC">终局系统</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="section-title">最新攻略</div>
+        <div class="section-link">全部攻略 →</div>
+      </div>
+      <div class="guides-list">
+        <div class="guide-row">
+          <span class="guide-cat" style="background:#FCEBEB;color:#A32D2D;border-color:#F09595">版本资讯</span>
+          <div class="guide-title">POE2 0.5 完整改动解读：Runes of Aldur 全新机制</div>
+          <div class="guide-meta">5月21日</div>
+        </div>
+        <div class="guide-row">
+          <span class="guide-cat" style="background:#E1F5EE;color:#0F6E56;border-color:#5DCAA5">新手指南</span>
+          <div class="guide-title">0.5 新玩家完全入坑指南：从角色选择到终局</div>
+          <div class="guide-meta">5月10日</div>
+        </div>
+        <div class="guide-row">
+          <span class="guide-cat" style="background:#FAEEDA;color:#854F0B;border-color:#FAC775">Build</span>
+          <div class="guide-title">0.5 开荒 Build 推荐：三个职业方向选择</div>
+          <div class="guide-meta">5月22日</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-wrap" style="border-bottom: none;">
+      <div class="section-head">
+        <div class="section-title">数据库</div>
+        <div class="section-link">浏览全部 →</div>
+      </div>
+      <div class="db-grid">
+        <div class="db-card">
+          <div class="db-count" style="color:#0F6E56">100+</div>
+          <div class="db-label">符文数据</div>
+        </div>
+        <div class="db-card">
+          <div class="db-count" style="color:#534AB7">17+</div>
+          <div class="db-label">新增宝石</div>
+        </div>
+        <div class="db-card">
+          <div class="db-count" style="color:#854F0B">30+</div>
+          <div class="db-label">独特装备</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: 内容区 -->
+<div class="tab-panel" id="tab-guides">
+  <div class="page-frame">
+    <div class="guides-hero">
+      <h2>攻略指南</h2>
+      <p>版本解读、新手教程、Build 推荐、经济攻略，每次 Patch 更新</p>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-chip active">全部</div>
+      <div class="filter-chip">版本资讯</div>
+      <div class="filter-chip">新手指南</div>
+      <div class="filter-chip">Build</div>
+      <div class="filter-chip">经济与制作</div>
+      <div class="filter-chip">终局内容</div>
+    </div>
+    <div class="guides-body">
+      <div class="guides-main">
+        <div class="patch-banner">
+          <i class="ti ti-bell" style="color:#854F0B;font-size:15px" aria-hidden="true"></i>
+          <div class="patch-banner-text"><strong>Patch 0.5「Return of the Ancients」</strong> 已于 5月29日上线，相关攻略持续更新中</div>
+        </div>
+        <div class="featured-card">
+          <div class="featured-eyebrow"><i class="ti ti-flame" aria-hidden="true" style="font-size:12px"></i> 版本必读</div>
+          <div class="featured-title">POE2 0.5 完整改动解读：Runes of Aldur 全新机制详析</div>
+          <div class="featured-excerpt">本次 0.5 版本是 GGG 迄今为止规模最大的一次更新，引入了 100+ 种新符文、全新的终局系统和两个新晋升职业。本文带你全面了解所有重要改动……</div>
+          <div class="featured-footer">
+            <span class="art-tag" style="background:#FCEBEB;color:#A32D2D;border-color:#F09595">版本资讯</span>
+            <span style="font-size:11px;color:var(--color-text-tertiary)">5月21日 · 12 分钟阅读</span>
+          </div>
+        </div>
+        <div class="article-item">
+          <div class="article-left">
+            <span class="article-cat" style="background:#E1F5EE;color:#0F6E56;border-color:#5DCAA5">新手指南</span>
+            <div class="article-title">0.5 新玩家完全入坑指南：从角色选择到终局路线图</div>
+            <div class="article-excerpt">0.5 版本带来了大量新玩家，本文从零开始讲清楚职业选择、技能系统和第一次进入终局需要做什么</div>
+            <div class="article-meta">5月10日 · 8 分钟阅读</div>
+          </div>
+          <div class="article-right"><i class="ti ti-star" aria-hidden="true"></i></div>
+        </div>
+        <div class="article-item">
+          <div class="article-left">
+            <span class="article-cat" style="background:#FAEEDA;color:#854F0B;border-color:#FAC775">Build</span>
+            <div class="article-title">0.5 开荒 Build 推荐：Martial Artist、Spiritwalker 和 Bloodmage</div>
+            <div class="article-excerpt">三个新晋升职业的开荒思路和关键技能选择，适合想在版本初期快速完成主线的玩家</div>
+            <div class="article-meta">5月22日 · 10 分钟阅读</div>
+          </div>
+          <div class="article-right"><i class="ti ti-trending-up" aria-hidden="true"></i></div>
+        </div>
+        <div class="article-item">
+          <div class="article-left">
+            <span class="article-cat" style="background:#E6F1FB;color:#185FA5;border-color:#85B7EB">经济与制作</span>
+            <div class="article-title">Verisium 高效获取方法：每小时最大化产出路线</div>
+            <div class="article-excerpt">0.5 版本引入的新货币 Verisium 是制作系统的核心，本文详解最高效的获取路线和使用优先级</div>
+            <div class="article-meta">6月1日 · 6 分钟阅读</div>
+          </div>
+          <div class="article-right"><i class="ti ti-coins" aria-hidden="true"></i></div>
+        </div>
+      </div>
+      <div class="guides-sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-title">按分类浏览</div>
+          <div class="sidebar-item">版本资讯 <span class="sidebar-count">3</span></div>
+          <div class="sidebar-item">新手指南 <span class="sidebar-count">4</span></div>
+          <div class="sidebar-item">Build <span class="sidebar-count">6</span></div>
+          <div class="sidebar-item">经济与制作 <span class="sidebar-count">5</span></div>
+          <div class="sidebar-item">终局内容 <span class="sidebar-count">3</span></div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-title">相关工具</div>
+          <div class="sidebar-item">符文组合速查器 <i class="ti ti-arrow-right" aria-hidden="true" style="font-size:11px"></i></div>
+          <div class="sidebar-item">Ward 计算器 <i class="ti ti-arrow-right" aria-hidden="true" style="font-size:11px"></i></div>
+          <div class="sidebar-item">符文数据库 <i class="ti ti-arrow-right" aria-hidden="true" style="font-size:11px"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['nav','home','guides'][i] === id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + id));
+}
+</script>

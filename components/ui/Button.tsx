@@ -2,21 +2,26 @@ import type { ButtonHTMLAttributes } from "react";
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary";
+  size?: "md" | "sm";
 };
 
 export default function Button({
   variant = "primary",
+  size = "md",
   className,
   ...props
 }: Props) {
   const base =
-    "inline-flex h-10 items-center justify-center rounded-full px-5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
-  const styles =
+    "inline-flex items-center justify-center rounded-full font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none";
+  
+  const sizeStyles = size === "sm" ? "h-8 px-3 text-xs" : "h-10 px-5 text-sm";
+  
+  const variantStyles =
     variant === "primary"
-      ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950"
-      : "border border-zinc-200 bg-white text-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50";
-  const merged = [base, styles, className].filter(Boolean).join(" ");
+      ? "bg-gradient-to-r from-violet-600 to-cyan-500 text-white hover:from-violet-500 hover:to-cyan-400"
+      : "border border-zinc-200 bg-white/80 text-zinc-950 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/60 dark:text-white dark:hover:bg-zinc-900/30";
+  
+  const merged = [base, sizeStyles, variantStyles, className].filter(Boolean).join(" ");
 
   return <button className={merged} {...props} />;
 }
-

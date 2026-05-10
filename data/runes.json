@@ -1,8 +1,225 @@
 {
   "meta": {
     "patch_version": "0.5",
-    "last_updated": "2026-05-29",
+    "last_updated": "2026-05-10",
     "status": "current"
   },
-  "runes": []
+  "runes": [
+    {
+      "id": "aldur_fire_01",
+      "slug": "rune-of-searing",
+      "name": "Rune of Searing",
+      "category": "elemental",
+      "sub_type": "fire",
+      "tier": 1,
+      "monster_modifier": {
+        "description": "Monsters deal 20% increased Fire Damage",
+        "difficulty_rating": 2
+      },
+      "reward": {
+        "description": "Increased chance to drop Ember currency",
+        "reward_type": "currency"
+      },
+      "slot_cost": 1,
+      "tags": ["fire", "elemental", "damage"],
+      "synergies": ["aldur_ember_01"],
+      "anti_synergies": [],
+      "source": "campaign_drop",
+      "area_level_min": 1,
+      "masterwork": false,
+      "notes": ""
+    },
+    {
+      "id": "aldur_cold_01",
+      "slug": "rune-of-glacier",
+      "name": "Rune of Glacier",
+      "category": "elemental",
+      "sub_type": "cold",
+      "tier": 1,
+      "monster_modifier": {
+        "description": "Monsters have 15% increased Cold Damage and 10% increased Freeze buildup",
+        "difficulty_rating": 2
+      },
+      "reward": {
+        "description": "Increased chance for Cold-themed drops",
+        "reward_type": "item"
+      },
+      "slot_cost": 1,
+      "tags": ["cold", "elemental", "control"],
+      "synergies": ["aldur_frost_01"],
+      "anti_synergies": ["aldur_fire_01"],
+      "source": "campaign_drop",
+      "area_level_min": 1,
+      "masterwork": false,
+      "notes": ""
+    },
+    {
+      "id": "aldur_lightning_01",
+      "slug": "rune-of-tempest",
+      "name": "Rune of Tempest",
+      "category": "elemental",
+      "sub_type": "lightning",
+      "tier": 1,
+      "monster_modifier": {
+        "description": "Monsters deal 18% increased Lightning Damage and have 8% increased action speed",
+        "difficulty_rating": 3
+      },
+      "reward": {
+        "description": "Slightly increased chance of Lightning-themed drops",
+        "reward_type": "item"
+      },
+      "slot_cost": 1,
+      "tags": ["lightning", "elemental", "speed"],
+      "synergies": ["aldur_shock_01"],
+      "anti_synergies": [],
+      "source": "campaign_drop",
+      "area_level_min": 1,
+      "masterwork": false,
+      "notes": ""
+    },
+    {
+      "id": "aldur_phys_01",
+      "slug": "rune-of-iron",
+      "name": "Rune of Iron",
+      "category": "physical",
+      "sub_type": "melee",
+      "tier": 1,
+      "monster_modifier": {
+        "description": "Monsters gain 12% increased Armour and 8% increased Physical Damage",
+        "difficulty_rating": 1
+      },
+      "reward": {
+        "description": "Increased chance of Physical-themed drops",
+        "reward_type": "item"
+      },
+      "slot_cost": 1,
+      "tags": ["physical", "defense", "mapping"],
+      "synergies": ["aldur_steel_01"],
+      "anti_synergies": [],
+      "source": "campaign_drop",
+      "area_level_min": 1,
+      "masterwork": false,
+      "notes": ""
+    },
+    {
+      "id": "aldur_chaos_01",
+      "slug": "rune-of-venom",
+      "name": "Rune of Venom",
+      "category": "chaos",
+      "sub_type": "dot",
+      "tier": 2,
+      "monster_modifier": {
+        "description": "Monsters deal 22% increased Chaos Damage and apply stronger damage over time",
+        "difficulty_rating": 4
+      },
+      "reward": {
+        "description": "Slightly increased chance for Chaos-themed drops",
+        "reward_type": "item"
+      },
+      "slot_cost": 1,
+      "tags": ["chaos", "dot", "challenge"],
+      "synergies": ["aldur_toxic_01"],
+      "anti_synergies": [],
+      "source": "map_drop",
+      "area_level_min": 68,
+      "masterwork": false,
+      "notes": ""
+    },
+    {
+      "id": "aldur_speed_01",
+      "slug": "rune-of-swiftness",
+      "name": "Rune of Swiftness",
+      "category": "utility",
+      "sub_type": "speed",
+      "tier": 2,
+      "monster_modifier": {
+        "description": "Monsters have 12% increased movement speed and 10% increased attack/cast speed",
+        "difficulty_rating": 3
+      },
+      "reward": {
+        "description": "Slightly increased reward for quick clears",
+        "reward_type": "loot"
+      },
+      "slot_cost": 1,
+      "tags": ["speed", "mapping", "risk"],
+      "synergies": ["aldur_haste_01"],
+      "anti_synergies": [],
+      "source": "map_drop",
+      "area_level_min": 68,
+      "masterwork": false,
+      "notes": ""
+    },
+    {
+      "id": "aldur_ward_01",
+      "slug": "rune-of-warding",
+      "name": "Rune of Warding",
+      "category": "defense",
+      "sub_type": "ward",
+      "tier": 2,
+      "monster_modifier": {
+        "description": "Monsters take 8% reduced damage. Your defensive effects are slightly more effective",
+        "difficulty_rating": 1
+      },
+      "reward": {
+        "description": "Small bonus to survivability-oriented rewards",
+        "reward_type": "item"
+      },
+      "slot_cost": 1,
+      "tags": ["defense", "ward", "mapping"],
+      "synergies": ["aldur_verisium_01"],
+      "anti_synergies": [],
+      "source": "map_drop",
+      "area_level_min": 68,
+      "masterwork": false,
+      "notes": ""
+    },
+    {
+      "id": "aldur_loot_01",
+      "slug": "rune-of-plunder",
+      "name": "Rune of Plunder",
+      "category": "loot",
+      "sub_type": "currency",
+      "tier": 2,
+      "monster_modifier": {
+        "description": "Monsters are 10% tougher, but drop rates for valuable items are slightly improved",
+        "difficulty_rating": 3
+      },
+      "reward": {
+        "description": "Improved chance for currency-like rewards",
+        "reward_type": "currency"
+      },
+      "slot_cost": 1,
+      "tags": ["loot", "currency", "drops"],
+      "synergies": ["aldur_bounty_01"],
+      "anti_synergies": [],
+      "source": "map_drop",
+      "area_level_min": 72,
+      "masterwork": false,
+      "notes": ""
+    },
+    {
+      "id": "aldur_masterwork_01",
+      "slug": "rune-of-perfection",
+      "name": "Rune of Perfection",
+      "category": "masterwork",
+      "sub_type": "rare",
+      "tier": 3,
+      "monster_modifier": {
+        "description": "Monsters have a 5% chance to be duplicated, dealing double damage",
+        "difficulty_rating": 5
+      },
+      "reward": {
+        "description": "Significantly improved rewards from all sources in the encounter",
+        "reward_type": "all"
+      },
+      "slot_cost": 2,
+      "tags": ["masterwork", "extreme", "bossing"],
+      "synergies": [],
+      "anti_synergies": [],
+      "source": "pinnacle_drop",
+      "area_level_min": 84,
+      "masterwork": true,
+      "notes": "A masterwork rune that pushes limits."
+    }
+  ]
 }

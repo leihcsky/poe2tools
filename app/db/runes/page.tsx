@@ -9,9 +9,9 @@ export const dynamic = "force-static";
 export const revalidate = 60 * 60;
 
 type RuneRecord = {
-  id?: string;
-  slug?: string;
-  name?: string;
+  id: string;
+  slug: string;
+  name: string;
 };
 
 async function loadRunes(): Promise<RuneRecord[]> {

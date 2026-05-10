@@ -69,8 +69,8 @@ export default async function UniquesIndexPage() {
         <section className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
           {uniques.length === 0 ? (
             <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              No unique item data yet. Add records to data/uniques.json to
-              generate the database.
+              Unique item data isn’t published yet. Check back after Patch{" "}
+              {patchVersion} notes drop.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

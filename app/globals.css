@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #171233;
+  --foreground: #ffffff;
+  --surface: #2d2752;
+  --surface-soft: rgba(45, 39, 82, 0.72);
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #7c3aed;
+  --accent-2: #06b6d4;
+  --ring: rgba(124, 58, 237, 0.6);
+  --link: #f2bf43;
 }
 
 @theme inline {
@@ -14,8 +21,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #171233;
+    --foreground: #ffffff;
   }
 }
 
@@ -23,4 +30,184 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.35);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.p2-section {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(10px);
+}
+
+.p2-popover {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.38);
+}
+
+.p2-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+}
+
+.p2-input {
+  height: 40px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0 12px;
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+
+.p2-input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.p2-select {
+  height: 40px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0 12px;
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+  cursor: pointer;
+}
+
+.p2-select option {
+  background: #2d2752; /* matches --surface */
+  color: #ffffff;
+}
+
+.p2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.p2-chip:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.p2-divider {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.p2-link {
+  color: var(--link);
+  text-decoration: none;
+}
+
+.p2-link:hover {
+  text-decoration: underline;
+}
+
+.p2-link:visited {
+  color: rgba(242, 191, 67, 0.86);
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a:visited {
+  color: rgba(242, 191, 67, 0.86);
+}
+
+.dark .dark\:bg-black {
+  background-color: var(--background) !important;
+}
+
+.dark .dark\:bg-\[\#070b15\]\/70 {
+  background-color: rgba(23, 18, 51, 0.72) !important;
+}
+
+.dark .dark\:bg-zinc-950 {
+  background-color: var(--surface) !important;
+}
+
+.dark .dark\:bg-zinc-950\/60 {
+  background-color: var(--surface-soft) !important;
+}
+
+.dark .dark\:bg-zinc-900\/30 {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.dark .dark\:border-zinc-800 {
+  border-color: var(--border) !important;
+}
+
+.dark .dark\:border-amber-900\/40,
+.dark .dark\:border-blue-900\/40,
+.dark .dark\:border-emerald-900\/40,
+.dark .dark\:border-indigo-900\/40,
+.dark .dark\:border-red-900\/40 {
+  border-color: var(--border) !important;
+}
+
+.dark .text-zinc-950,
+.dark .text-zinc-900,
+.dark .text-zinc-800 {
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+.dark .text-zinc-700 {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.dark .text-zinc-600 {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.dark .text-zinc-500 {
+  color: rgba(255, 255, 255, 0.66) !important;
+}
+
+.dark .text-zinc-400 {
+  color: rgba(255, 255, 255, 0.56) !important;
+}
+
+.dark .dark\:text-zinc-50 {
+  color: rgba(255, 255, 255, 0.98) !important;
+}
+
+.dark .dark\:text-zinc-100 {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.dark .dark\:text-zinc-200,
+.dark .dark\:text-zinc-300 {
+  color: rgba(255, 255, 255, 0.84) !important;
+}
+
+.dark .dark\:text-zinc-400 {
+  color: rgba(255, 255, 255, 0.66) !important;
 }

@@ -3,7 +3,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
 
 export function generateMetadata(): Metadata {
   const title = "POE2 Runic Ward Calculator";

@@ -1,7 +1,5 @@
 import CraftingSimWidget from "@/components/tools/CraftingSimWidget";
 
-export const dynamic = "force-static";
-
 export default function VerisiumCraftPage() {
   return (
     <div className="flex flex-col flex-1 bg-zinc-50 dark:bg-black">

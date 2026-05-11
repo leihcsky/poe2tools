@@ -6,9 +6,7 @@ import type { Metadata } from "next";
 import TableOfContents, { type TocItem } from "@/components/guides/TableOfContents";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
 export const dynamicParams = false;
-export const revalidate = 60 * 60;
 
 export async function generateStaticParams() {
   const slugs = await listGuideSlugs();

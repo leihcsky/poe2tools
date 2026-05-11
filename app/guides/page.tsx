@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import GuidesIndexClient, {
   type GuideListItem,
 } from "@/components/guides/GuidesIndexClient";
@@ -5,8 +6,6 @@ import { listGuideSlugs, readGuide } from "@/lib/guides";
 import type { Metadata } from "next";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
-export const revalidate = 60 * 60;
 
 export const metadata: Metadata = {
   title: "POE2 Guides — Patch 0.5 Runes of Aldur, Builds & Beginner Tips",
@@ -47,11 +46,13 @@ export default async function GuidesIndexPage() {
   return (
     <div className="flex flex-col flex-1 bg-zinc-50 dark:bg-black">
       <main className="w-full max-w-5xl mx-auto flex-1 px-6 py-12">
-        <GuidesIndexClient
-          patchVersion={patchVersion}
-          patchName={patchName}
-          items={items}
-        />
+        <Suspense>
+          <GuidesIndexClient
+            patchVersion={patchVersion}
+            patchName={patchName}
+            items={items}
+          />
+        </Suspense>
       </main>
     </div>
   );

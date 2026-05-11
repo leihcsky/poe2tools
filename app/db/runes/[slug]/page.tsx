@@ -5,8 +5,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
-export const revalidate = 60 * 60;
 export const dynamicParams = false;
 
 type RuneRecord = {
@@ -218,7 +216,7 @@ export async function generateMetadata({
   ].filter(Boolean);
   const description = descriptionParts.join(" ").slice(0, 160);
 
-  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.com";
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.top";
 
   return {
     title,

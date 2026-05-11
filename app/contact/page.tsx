@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const dynamic = "force-static";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.top";
 
 export const metadata: Metadata = {
   title: "Contact POE2Tools — Feedback, Bugs & Suggestions",

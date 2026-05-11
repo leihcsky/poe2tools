@@ -6,7 +6,6 @@ import type { Metadata } from "next";
 import { listGuideSlugs, readGuide } from "@/lib/guides";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
 
 export const metadata: Metadata = {
   title: "POE2 Tools: Rune Combos, Ward Calculator & Guides",

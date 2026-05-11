@@ -6,8 +6,6 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
-export const revalidate = 60 * 60;
 
 type RuneRecord = {
   id: string;

@@ -5,11 +5,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
-export const revalidate = 60 * 60;
 export const dynamicParams = false;
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.top";
 
 type Mod = { text: string; min: number | null; max: number | null; type: string };
 

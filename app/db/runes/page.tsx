@@ -5,10 +5,8 @@ import Link from "next/link";
 import RuneListClient from "@/components/db/RuneListClient";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
-export const revalidate = 60 * 60;
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.top";
 
 export const metadata: Metadata = {
   title: "POE2 Rune Database — All Runes of Aldur Effects & Stats",

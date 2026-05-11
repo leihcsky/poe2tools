@@ -208,30 +208,34 @@ export async function generateMetadata({
   const { rune } = await getRuneBySlug(slug);
   if (!rune) return {};
 
-  const title = `${rune.name ?? slug} — Rune Database (POE2)`;
+  const name = rune.name ?? slug;
+  const title = `${name} — POE2 Rune Effect, Reward & Synergies`;
   const descriptionParts = [
-    rune.monster_modifier.description ? `Effect: ${rune.monster_modifier.description}` : null,
-    rune.reward.description ? `Reward: ${rune.reward.description}` : null,
+    `${name} in Path of Exile 2:`,
+    rune.monster_modifier.description ? `Effect — ${rune.monster_modifier.description}.` : null,
+    rune.reward.description ? `Reward — ${rune.reward.description}.` : null,
+    `Difficulty ${rune.monster_modifier.difficulty_rating}/5, ${rune.slot_cost} slot${rune.slot_cost > 1 ? "s" : ""}.`,
   ].filter(Boolean);
-  const description =
-    descriptionParts.length > 0
-      ? descriptionParts.join(" ")
-      : "Rune details, difficulty impact, recommended pairings, and related runes.";
+  const description = descriptionParts.join(" ").slice(0, 160);
+
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.com";
 
   return {
     title,
     description,
-    alternates: { canonical: `/db/runes/${slug}` },
+    robots: { index: false, follow: true },
+    alternates: { canonical: `${BASE_URL}/db/runes/${slug}` },
     openGraph: {
       title,
       description,
-      url: `/db/runes/${slug}`,
+      url: `${BASE_URL}/db/runes/${slug}`,
+      siteName: "POE2Tools",
       images: [
         {
           url: "/images/guides/poe2-runes-of-aldur-explained.svg",
           width: 1200,
           height: 630,
-          alt: rune.name ?? slug,
+          alt: `${name} — POE2 Rune`,
         },
       ],
     },
@@ -275,8 +279,21 @@ export default async function RunePage({
       shared: x.shared,
     }));
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    name: title,
+    headline: `${title} — POE2 Rune of Aldur`,
+    description: rune.monster_modifier.description,
+    keywords: [title, "POE2", "Rune of Aldur", ...tags].join(", "),
+  };
+
   return (
     <div className="flex flex-col flex-1 bg-zinc-50 dark:bg-black">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <main className="w-full max-w-4xl mx-auto flex-1 px-6 py-12">
         <nav
           aria-label="Breadcrumb"
@@ -401,6 +418,67 @@ export default async function RunePage({
             </div>
           </div>
         </section>
+
+        {/* Synergies & Anti-synergies */}
+        {(rune.synergies.length > 0 || rune.anti_synergies.length > 0) && (
+          <section className="mt-8 p2-section p-6">
+            <h2 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">
+              Synergies & Conflicts
+            </h2>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {rune.synergies.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-emerald-500">
+                    Synergizes with
+                  </h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {rune.synergies.map((synId) => {
+                      const synRune = runes.find((r) => r.id === synId);
+                      const synSlug = synRune ? toSlug(synRune) : null;
+                      const synName = synRune?.name ?? synId.replace(/_/g, " ");
+                      return synSlug ? (
+                        <Link
+                          key={synId}
+                          href={`/db/runes/${synSlug}`}
+                          className="p2-chip transition-colors hover:bg-emerald-500/10"
+                        >
+                          {synName}
+                        </Link>
+                      ) : (
+                        <span key={synId} className="p2-chip">{synName}</span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {rune.anti_synergies.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-red-400">
+                    Conflicts with
+                  </h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {rune.anti_synergies.map((antiId) => {
+                      const antiRune = runes.find((r) => r.id === antiId);
+                      const antiSlug = antiRune ? toSlug(antiRune) : null;
+                      const antiName = antiRune?.name ?? antiId.replace(/_/g, " ");
+                      return antiSlug ? (
+                        <Link
+                          key={antiId}
+                          href={`/db/runes/${antiSlug}`}
+                          className="p2-chip transition-colors hover:bg-red-500/10"
+                        >
+                          {antiName}
+                        </Link>
+                      ) : (
+                        <span key={antiId} className="p2-chip">{antiName}</span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         <section className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="p2-section p-6">

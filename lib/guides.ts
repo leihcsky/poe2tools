@@ -7,6 +7,7 @@ export type GuideFrontmatter = {
   title: string;
   category: GuideCategory;
   date: string;
+  lastModified?: string;
   readMinutes?: number;
   excerpt?: string;
   image?: string;
@@ -95,6 +96,11 @@ export function parseGuideFile(slug: string, raw: string): GuideDoc | null {
       ? partial.readMinutes
       : undefined;
 
+  const lastModified =
+    typeof partial.lastModified === "string" && partial.lastModified.trim()
+      ? partial.lastModified.trim()
+      : undefined;
+
   const excerpt = typeof partial.excerpt === "string" ? partial.excerpt : undefined;
   const image = typeof partial.image === "string" ? partial.image : undefined;
   const keywords = Array.isArray(partial.keywords)
@@ -107,6 +113,7 @@ export function parseGuideFile(slug: string, raw: string): GuideDoc | null {
       title,
       category,
       date,
+      lastModified,
       readMinutes,
       excerpt,
       image,

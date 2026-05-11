@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { listGuideSlugs, readGuide } from "@/lib/guides";
 import type { Metadata } from "next";
+import TableOfContents, { type TocItem } from "@/components/guides/TableOfContents";
 
 export const runtime = "nodejs";
 export const dynamic = "force-static";
@@ -90,6 +91,34 @@ export async function generateMetadata({
   };
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim();
+}
+
+function extractToc(body: string): TocItem[] {
+  const items: TocItem[] = [];
+  const lines = body.split(/\n/g);
+  for (const line of lines) {
+    const h2 = /^##\s+(.+)$/.exec(line);
+    if (h2) {
+      const text = h2[1].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_~`]/g, "");
+      items.push({ id: slugify(text), text, level: 2 });
+      continue;
+    }
+    const h3 = /^###\s+(.+)$/.exec(line);
+    if (h3) {
+      const text = h3[1].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_~`]/g, "");
+      items.push({ id: slugify(text), text, level: 3 });
+    }
+  }
+  return items;
+}
+
 function renderInline(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   const re = /\[([^\]]+)\]\(([^)]+)\)/g;
@@ -175,10 +204,12 @@ function Markdown({ body }: { body: string }) {
 
     const h2 = /^##\s+(.+)$/.exec(line);
     if (h2) {
+      const headingText = h2[1].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_~`]/g, "");
       out.push(
         <h2
           key={`h2-${i}`}
-          className="mt-6 text-xl font-semibold text-zinc-950 dark:text-zinc-50"
+          id={slugify(headingText)}
+          className="mt-6 scroll-mt-24 text-xl font-semibold text-zinc-950 dark:text-zinc-50"
         >
           {renderInline(h2[1])}
         </h2>,
@@ -189,10 +220,12 @@ function Markdown({ body }: { body: string }) {
 
     const h3 = /^###\s+(.+)$/.exec(line);
     if (h3) {
+      const headingText = h3[1].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_~`]/g, "");
       out.push(
         <h3
           key={`h3-${i}`}
-          className="mt-6 text-base font-semibold text-zinc-950 dark:text-zinc-50"
+          id={slugify(headingText)}
+          className="mt-6 scroll-mt-24 text-base font-semibold text-zinc-950 dark:text-zinc-50"
         >
           {renderInline(h3[1])}
         </h3>,
@@ -311,9 +344,11 @@ export default async function GuidePage({
     .sort((a, b) => new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime())
     .slice(0, 6);
 
+  const tocItems = extractToc(doc.body);
+
   return (
     <div className="flex flex-col flex-1 bg-zinc-50 dark:bg-black">
-      <main className="w-full max-w-4xl mx-auto flex-1 px-6 py-12">
+      <main className="w-full max-w-6xl mx-auto flex-1 px-6 py-12">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
@@ -338,40 +373,62 @@ export default async function GuidePage({
           </span>
         </nav>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            Guide
-          </div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-            {doc.frontmatter.title}
-          </h1>
+        <div className="flex gap-8">
+          {/* Main article */}
+          <article className="min-w-0 flex-1">
+            <section className="rounded-2xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                Guide
+              </div>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+                {doc.frontmatter.title}
+              </h1>
 
-          <div className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <span>
+              Published{" "}
+              {(() => {
+                const dt = new Date(doc.frontmatter.date);
+                return Number.isNaN(dt.getTime()) ? doc.frontmatter.date : fmt.format(dt);
+              })()}
+            </span>
             {(() => {
-              const dt = new Date(doc.frontmatter.date);
-              return Number.isNaN(dt.getTime())
-                ? doc.frontmatter.date
-                : fmt.format(dt);
+              const mod = doc.frontmatter.lastModified ?? doc.frontmatter.date;
+              if (mod === doc.frontmatter.date) return null;
+              const dt = new Date(mod);
+              if (Number.isNaN(dt.getTime())) return null;
+              return (
+                <span className="text-zinc-500 dark:text-zinc-500">
+                  · Updated {fmt.format(dt)}
+                </span>
+              );
             })()}
-            {typeof doc.frontmatter.readMinutes === "number"
-              ? ` · ${doc.frontmatter.readMinutes} min read`
-              : ""}
+            {typeof doc.frontmatter.readMinutes === "number" && (
+              <span>· {doc.frontmatter.readMinutes} min read</span>
+            )}
           </div>
 
-          {doc.frontmatter.image ? (
-            <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
-              <Image
-                src={doc.frontmatter.image}
-                alt={doc.frontmatter.title}
-                width={1200}
-                height={630}
-                className="h-auto w-full"
-              />
-            </div>
-          ) : null}
+              {doc.frontmatter.image ? (
+                <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                  <Image
+                    src={doc.frontmatter.image}
+                    alt={doc.frontmatter.title}
+                    width={1200}
+                    height={630}
+                    className="h-auto w-full"
+                  />
+                </div>
+              ) : null}
 
-          <Markdown body={doc.body} />
-        </section>
+              <Markdown body={doc.body} />
+            </section>
+          </article>
+
+          {/* Table of Contents sidebar */}
+          <aside className="hidden xl:block w-56 shrink-0">
+            <TableOfContents items={tocItems} />
+          </aside>
+        </div>
 
         <section className="mt-8 p2-section p-6">
           <div className="flex items-center justify-between">
@@ -401,22 +458,34 @@ export default async function GuidePage({
                   <Link
                     key={g.slug}
                     href={`/guides/${g.slug}`}
-                    className="p2-card p-4 transition-colors hover:bg-white/6"
+                    className="p2-nav-link group overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] transition-all hover:border-[#F2BF43]/30 hover:bg-white/[0.06]"
                   >
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                      {dateLabel}
-                      {typeof g.frontmatter.readMinutes === "number"
-                        ? ` · ${g.frontmatter.readMinutes} min read`
-                        : ""}
-                    </div>
-                    <div className="mt-1 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-                      {g.frontmatter.title}
-                    </div>
-                    {g.frontmatter.excerpt ? (
-                      <div className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                        {g.frontmatter.excerpt}
+                    {g.frontmatter.image && (
+                      <div className="relative h-32 w-full overflow-hidden bg-white/5">
+                        <Image
+                          src={g.frontmatter.image}
+                          alt={g.frontmatter.title}
+                          fill
+                          className="object-cover transition-transform group-hover:scale-105"
+                        />
                       </div>
-                    ) : null}
+                    )}
+                    <div className="p-4">
+                      <div className="text-[11px] font-medium text-white/50">
+                        {dateLabel}
+                        {typeof g.frontmatter.readMinutes === "number"
+                          ? ` · ${g.frontmatter.readMinutes} min read`
+                          : ""}
+                      </div>
+                      <div className="mt-1.5 text-sm font-semibold text-white/95 group-hover:text-[#F2BF43] transition-colors">
+                        {g.frontmatter.title}
+                      </div>
+                      {g.frontmatter.excerpt && (
+                        <div className="mt-1 text-xs leading-relaxed text-white/60 line-clamp-2">
+                          {g.frontmatter.excerpt}
+                        </div>
+                      )}
+                    </div>
                   </Link>
                 );
               })}

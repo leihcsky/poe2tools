@@ -5,6 +5,6 @@ module.exports = {
   generateRobotsTxt: true,
   changefreq: "daily",
   priority: 0.7,
-  // Placeholder rune data: page is noindex; omit from sitemap until live data + indexable metadata.
-  exclude: ["/tools/rune-combinations"],
+  // Preview data pages: noindex; omit from sitemap until live data + indexable metadata.
+  exclude: ["/tools/rune-combinations", "/tools/runic-ward-calc", "/db/runes", "/db/runes/**", "/db/gems", "/db/gems/**", "/db/uniques", "/db/uniques/**"],
 };

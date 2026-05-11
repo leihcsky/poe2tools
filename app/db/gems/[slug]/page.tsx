@@ -1,18 +1,40 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import type { Metadata } from "next";
 
 export const runtime = "nodejs";
 export const dynamic = "force-static";
 export const revalidate = 60 * 60;
 export const dynamicParams = false;
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://poe2tools.com";
+
 type GemRecord = {
-  id?: string;
-  slug?: string;
-  name?: string;
-  description?: string;
-  tags?: string[];
+  id: string;
+  slug: string;
+  name: string;
+  gem_type: "active" | "support";
+  tags: string[];
+  description: string;
+  cost: { resource: "mana" | "spirit"; base_value: number };
+  cooldown: number | null;
+  cast_time: number | null;
+  critical_chance: number | null;
+  weapon_requirements: string[];
+  attribute_requirements: { int: number; str: number; dex: number };
+  max_level: number;
+  per_level: { damage_multiplier: number; mana_cost_multiplier: number };
+  stat_text: string;
+  is_kalguuran: boolean;
+  consumes_ward: boolean;
+  patch_added: string;
+};
+
+type GemsFile = {
+  meta?: { patch_version?: string };
+  gems?: unknown[];
 };
 
 async function loadGems(): Promise<GemRecord[]> {
@@ -20,16 +42,12 @@ async function loadGems(): Promise<GemRecord[]> {
   const raw = await readFile(filePath, "utf8").catch(() => "");
   const trimmed = raw.trim();
   if (!trimmed) return [];
-
   try {
     const parsed: unknown = JSON.parse(trimmed);
-    if (Array.isArray(parsed)) return parsed as GemRecord[];
-
     if (parsed && typeof parsed === "object") {
-      const maybeGems = (parsed as { gems?: unknown }).gems;
-      if (Array.isArray(maybeGems)) return maybeGems as GemRecord[];
+      const file = parsed as GemsFile;
+      return Array.isArray(file.gems) ? (file.gems as GemRecord[]) : [];
     }
-
     return [];
   } catch {
     return [];
@@ -37,67 +55,505 @@ async function loadGems(): Promise<GemRecord[]> {
 }
 
 function toSlug(gem: GemRecord): string | null {
-  const s = typeof gem.slug === "string" ? gem.slug : null;
-  if (s && s.trim()) return s.trim();
-  const id = typeof gem.id === "string" ? gem.id : null;
-  if (id && id.trim()) return id.trim();
-  return null;
+  return gem.slug?.trim() || gem.id?.trim() || null;
+}
+
+async function getGemBySlug(slug: string) {
+  const gems = await loadGems();
+  const gem = gems.find((g) => toSlug(g) === slug) ?? gems.find((g) => g.id === slug) ?? null;
+  return { gem, gems };
 }
 
 export async function generateStaticParams() {
   const gems = await loadGems();
-  const slugs = gems.map(toSlug).filter((v): v is string => Boolean(v));
-  const unique = Array.from(new Set(slugs));
-  return unique.map((slug) => ({ slug }));
+  return Array.from(new Set(gems.map(toSlug).filter(Boolean))).map((slug) => ({ slug }));
 }
 
-export default async function GemPage({
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const { gem } = await getGemBySlug(slug);
+  if (!gem) return {};
+
+  const name = gem.name ?? slug;
+  const title = `${name} — POE2 Skill Gem Effect, Stats & Build Tips`;
+  const desc = gem.description
+    ? `${name}: ${gem.description}`.slice(0, 155) + "…"
+    : `${name} skill gem — full stats, recommended builds, and mechanic breakdown for Path of Exile 2.`;
+
+  return {
+    title,
+    description: desc,
+    robots: { index: false, follow: true },
+    alternates: { canonical: `${BASE_URL}/db/gems/${slug}` },
+    openGraph: { title, description: desc, url: `${BASE_URL}/db/gems/${slug}`, siteName: "POE2Tools", type: "article" },
+    twitter: { title, description: desc, card: "summary_large_image" },
+  };
+}
+
+/* ── helpers ── */
+
+function gemTypeBadgeClass(type: string) {
+  return type === "active"
+    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+    : "border-blue-500/30 bg-blue-500/10 text-blue-300";
+}
+
+function attrColor(attr: string) {
+  if (attr === "str") return "text-red-400";
+  if (attr === "dex") return "text-green-400";
+  return "text-blue-400";
+}
+
+function attrLabel(attr: string) {
+  if (attr === "str") return "Strength";
+  if (attr === "dex") return "Dexterity";
+  return "Intelligence";
+}
+
+const MECHANIC_GLOSSARY: Record<string, string> = {
+  Chain: "After hitting, the projectile jumps to nearby enemies. More chains = wider coverage.",
+  Pierce: "Projectiles pass through enemies, hitting multiple targets in a line.",
+  Fork: "On hit, the projectile splits into two that fly in different directions.",
+  Infusion: "A stacking buff that empowers the next cast. Consuming it usually triggers a stronger effect.",
+  "Lightning Infused": "A Lightning Infusion buff. When consumed, the skill gains bonus Lightning damage or extra chains.",
+  "Fire Infused": "A Fire Infusion buff. When consumed, grants bonus Fire damage or additional projectiles.",
+  "Cold Infused": "A Cold Infusion buff. When consumed, grants bonus Cold damage or Freeze capability.",
+  Ignite: "A Fire ailment that deals burning damage over time. Stronger hits cause higher-damage Ignites.",
+  Shock: "A Lightning ailment that increases damage taken by the enemy. Magnitude scales with hit damage.",
+  Freeze: "A Cold ailment that completely immobilises the enemy for a duration based on buildup.",
+  Chill: "A Cold ailment that slows enemy action speed. Stacks with other slowing effects.",
+  Poison: "A Chaos ailment that deals damage over time. Multiple Poisons can stack on one target.",
+  Bleeding: "A Physical ailment that deals damage over time, increased when the target moves.",
+  "Ancestral Boost": "A temporary melee buff triggered by Warcries. Boosted Strikes and Slams gain extra effects.",
+  Empower: "An enhanced state that makes the next use of a skill significantly more powerful.",
+  Glory: "Resource generated by specific actions (e.g. Igniting). Required to activate powerful Warcry transformations.",
+  "Power Charge": "Offensive charge that increases Critical Strike Chance. Max 3 by default.",
+  "Frenzy Charge": "Speed charge that increases Attack/Cast Speed and Damage. Max 3 by default.",
+  "Endurance Charge": "Defensive charge that increases resistances and Physical Damage Reduction. Max 3 by default.",
+  Totem: "A stationary entity that uses skills on your behalf. Limited number can be active at once.",
+  Minion: "Summoned creatures that fight for you. Their stats scale with gem level and your modifiers.",
+  Reservation: "Reserves a portion of Spirit (or Mana) to maintain a persistent buff effect.",
+  "Break Armour": "Reduces enemy Armour by a flat amount per hit. Fully Breaking Armour leaves them vulnerable.",
+  Warcry: "A shout that buffs you and/or debuffs nearby enemies. Often scales with nearby enemy Power.",
+  Slam: "A ground-targeted melee area attack. Many Slams can create Aftershocks or Fissures.",
+  Strike: "A targeted melee hit. Strikes can be Ancestrally Boosted for extra damage and range.",
+  Combo: "Built up by basic Strikes. Some finisher skills require or consume Combo stacks.",
+  Channelling: "Skills that are held down, continuously dealing damage or accumulating power over time.",
+  Consecrated: "Holy ground that regenerates Life for you and Allies standing on it.",
+  Exposure: "A debuff that lowers enemy Elemental Resistances for a duration.",
+  Culling: "Instantly kills enemies below 10% Life on hit.",
+};
+
+function extractMechanics(statText: string, description: string): { term: string; explanation: string }[] {
+  const combined = `${description} ${statText}`;
+  const found: { term: string; explanation: string }[] = [];
+  const seen = new Set<string>();
+
+  for (const [term, explanation] of Object.entries(MECHANIC_GLOSSARY)) {
+    if (seen.has(term)) continue;
+    const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    if (regex.test(combined)) {
+      seen.add(term);
+      found.push({ term, explanation });
+    }
+  }
+  return found.slice(0, 8);
+}
+
+function inferBuildSuggestions(gem: GemRecord): { title: string; description: string }[] {
+  const suggestions: { title: string; description: string }[] = [];
+  const text = `${gem.description} ${gem.stat_text}`.toLowerCase();
+  const weapons = gem.weapon_requirements.map((w) => w.toLowerCase());
+
+  if (gem.gem_type === "support") {
+    if (text.includes("minion") || text.includes("totem"))
+      suggestions.push({ title: "Summoner / Totem Builds", description: "Pair with Minion or Totem active skills to amplify summon performance." });
+    if (text.includes("spell"))
+      suggestions.push({ title: "Spell Caster Builds", description: "Link to your primary Spell for a direct damage or utility boost." });
+    if (text.includes("attack") || text.includes("melee") || text.includes("strike"))
+      suggestions.push({ title: "Melee / Attack Builds", description: "Socket alongside Strike or Slam skills that benefit from the supported mechanic." });
+    if (text.includes("projectile") || text.includes("bow") || text.includes("crossbow"))
+      suggestions.push({ title: "Ranged Projectile Builds", description: "Works well with Bow or Crossbow skills that fire multiple projectiles." });
+    if (text.includes("critical") || text.includes("crit"))
+      suggestions.push({ title: "Critical Strike Builds", description: "Best in setups that stack Critical Strike Chance or benefit from Crit-triggered effects." });
+    if (text.includes("poison") || text.includes("bleed") || text.includes("chaos"))
+      suggestions.push({ title: "DoT / Ailment Builds", description: "Synergises with Poison, Bleed, or Chaos damage-over-time strategies." });
+    if (suggestions.length === 0)
+      suggestions.push({ title: "Versatile Support", description: "A flexible support gem — experiment with various active skills to find the best fit for your playstyle." });
+    return suggestions.slice(0, 3);
+  }
+
+  if (text.includes("fire") || text.includes("ignite"))
+    suggestions.push({ title: "Fire / Ignite Build", description: "Scale Fire damage and Ignite magnitude. Pair with Fire Penetration or Immolate supports." });
+  if (text.includes("lightning") || text.includes("shock"))
+    suggestions.push({ title: "Lightning / Shock Build", description: "Stack Lightning damage and Shock effect. Innervate and Lightning Penetration supports work well." });
+  if (text.includes("cold") || text.includes("freeze") || text.includes("chill"))
+    suggestions.push({ title: "Cold / Freeze Build", description: "Focus on Cold damage and Freeze buildup. Ice Bite and Cold Penetration enhance freezing power." });
+  if (text.includes("chaos") || text.includes("poison"))
+    suggestions.push({ title: "Chaos / Poison Build", description: "Layer Poison stacks for damage over time. Extraction and Poison supports amplify DoT." });
+  if (text.includes("physical") || text.includes("bleed"))
+    suggestions.push({ title: "Physical / Bleed Build", description: "Raw Physical hits with Bleed potential. Heavy Swing and Brutality supports maximise damage." });
+  if (text.includes("minion") || text.includes("zombie") || text.includes("skeleton") || text.includes("spirit"))
+    suggestions.push({ title: "Summoner Build", description: "Focus on Minion Life, damage, and gem levels. Feeding Frenzy and Minion Mastery are key supports." });
+  if (text.includes("totem"))
+    suggestions.push({ title: "Totem Build", description: "Build around Totem placement speed and durability. Hardy Totems and Font supports are strong picks." });
+  if (text.includes("warcry") || text.includes("glory"))
+    suggestions.push({ title: "Warcry / Glory Build", description: "Generate Glory through combat actions, then unleash powerful Warcry transformations." });
+
+  if (weapons.some((w) => w.includes("bow")))
+    suggestions.push({ title: "Bow Ranger", description: "A Bow-based setup focusing on Projectile damage and speed. Multishot or Pierce supports add clear." });
+  if (weapons.some((w) => w.includes("mace") || w.includes("quarterstaff")))
+    suggestions.push({ title: "Mace / Staff Warrior", description: "Melee Slam playstyle using heavy weapons. Armour Break and Aftershock supports enhance area damage." });
+  if (weapons.some((w) => w.includes("sword")))
+    suggestions.push({ title: "Sword Duelist", description: "Fast, precise melee using one- or two-handed swords. Combo and Strike supports pair naturally." });
+  if (weapons.some((w) => w.includes("dagger") || w.includes("claw")))
+    suggestions.push({ title: "Dagger / Claw Assassin", description: "High Crit and evasion-based playstyle. Ambush and Poison supports suit this archetype." });
+  if (weapons.some((w) => w.includes("crossbow")))
+    suggestions.push({ title: "Crossbow Engineer", description: "Ammunition-based gameplay with reloading mechanics. Ammo Conservation and Fresh Clip supports are useful." });
+  if (weapons.some((w) => w.includes("wand")))
+    suggestions.push({ title: "Wand Caster", description: "Hybrid spell-attack playstyle using Wands for both casting and hitting." });
+
+  if (gem.cost.resource === "spirit")
+    suggestions.push({ title: "Aura / Reservation Build", description: "Stack Spirit to sustain this alongside other reservation skills for powerful layered buffs." });
+
+  if (suggestions.length === 0)
+    suggestions.push({ title: "Versatile Skill", description: "A flexible active gem — try different support gem setups and weapon types to suit your build goals." });
+
+  return suggestions.slice(0, 4);
+}
+
+function getRelatedGems(gem: GemRecord, allGems: GemRecord[]) {
+  const text = `${gem.description} ${gem.stat_text}`.toLowerCase();
+  const mySlug = toSlug(gem);
+
+  const keywords = [
+    "fire", "cold", "lightning", "chaos", "physical",
+    "minion", "totem", "projectile", "melee", "spell",
+    "strike", "slam", "warcry", "bow", "crossbow",
+  ];
+  const myKeywords = keywords.filter((k) => text.includes(k));
+
+  return allGems
+    .filter((g) => toSlug(g) !== mySlug)
+    .map((g) => {
+      const gText = `${g.description} ${g.stat_text}`.toLowerCase();
+      let score = 0;
+      const shared: string[] = [];
+      for (const k of myKeywords) {
+        if (gText.includes(k)) { score++; shared.push(k); }
+      }
+      if (gem.gem_type === "active" && g.gem_type === "support") score += 0.5;
+      if (gem.gem_type === "support" && g.gem_type === "active") score += 0.5;
+      return { gem: g, score, shared };
+    })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6)
+    .map((x) => ({
+      slug: toSlug(x.gem)!,
+      name: x.gem.name,
+      gem_type: x.gem.gem_type,
+      description: x.gem.description.slice(0, 80) + (x.gem.description.length > 80 ? "…" : ""),
+    }));
+}
+
+function getSuggestedSupports(gem: GemRecord, allGems: GemRecord[]) {
+  if (gem.gem_type !== "active") return [];
+  const text = `${gem.description} ${gem.stat_text}`.toLowerCase();
+  const mySlug = toSlug(gem);
+
+  return allGems
+    .filter((g) => g.gem_type === "support" && toSlug(g) !== mySlug)
+    .map((g) => {
+      const gText = `${g.description} ${g.stat_text}`.toLowerCase();
+      let score = 0;
+      if (text.includes("spell") && gText.includes("spell")) score += 2;
+      if (text.includes("attack") && gText.includes("attack")) score += 2;
+      if (text.includes("melee") && gText.includes("melee")) score += 2;
+      if (text.includes("strike") && gText.includes("strike")) score += 2;
+      if (text.includes("projectile") && gText.includes("projectile")) score += 2;
+      if (text.includes("minion") && gText.includes("minion")) score += 2;
+      if (text.includes("totem") && gText.includes("totem")) score += 2;
+      if (text.includes("fire") && gText.includes("fire")) score += 1;
+      if (text.includes("cold") && gText.includes("cold")) score += 1;
+      if (text.includes("lightning") && gText.includes("lightning")) score += 1;
+      if (text.includes("chaos") && gText.includes("chaos")) score += 1;
+      if (text.includes("physical") && gText.includes("physical")) score += 1;
+      if (text.includes("critical") && gText.includes("critical")) score += 1;
+      return { gem: g, score };
+    })
+    .filter((x) => x.score >= 2)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map((x) => ({ slug: toSlug(x.gem)!, name: x.gem.name, description: x.gem.description.slice(0, 100) }));
+}
+
+/* ── page ── */
+
+export default async function GemDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const gems = await loadGems();
-  const gem = gems.find((g) => toSlug(g) === slug) ?? gems.find((g) => g.id === slug);
+  const { gem, gems } = await getGemBySlug(slug);
   if (!gem) notFound();
 
-  const title = gem.name ?? slug;
-  const tags = Array.isArray(gem.tags) ? gem.tags : [];
+  const name = gem.name ?? slug;
+  const statLines = gem.stat_text ? gem.stat_text.split("\n").filter(Boolean) : [];
+  const nonZeroAttrs = (["str", "dex", "int"] as const).filter((a) => gem.attribute_requirements[a] > 0);
+  const hasScaling = gem.per_level.damage_multiplier !== 1.0 || gem.per_level.mana_cost_multiplier !== 1.0;
+
+  const mechanics = extractMechanics(gem.stat_text, gem.description);
+  const buildSuggestions = inferBuildSuggestions(gem);
+  const related = getRelatedGems(gem, gems);
+  const suggestedSupports = getSuggestedSupports(gem, gems);
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    name,
+    headline: `${name} — POE2 Skill Gem`,
+    description: gem.description,
+    keywords: [name, "POE2", "Skill Gem", gem.gem_type, "Path of Exile 2"].join(", "),
+  };
 
   return (
-    <div className="flex flex-col flex-1 bg-zinc-50 dark:bg-black">
+    <div className="flex flex-col flex-1">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
       <main className="w-full max-w-4xl mx-auto flex-1 px-6 py-12">
-        <section className="rounded-2xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            Skill Gem
-          </div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-            {title}
-          </h1>
-          <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Slug: {slug}
-            {gem.id ? ` · id: ${gem.id}` : ""}
-          </div>
+        {/* Breadcrumbs */}
+        <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 text-xs text-white/50">
+          <Link href="/" className="p2-link">Home</Link>
+          <span aria-hidden>/</span>
+          <Link href="/db/gems" className="p2-link">Skill Gems</Link>
+          <span aria-hidden>/</span>
+          <span className="truncate text-white/80">{name}</span>
+        </nav>
 
-          {gem.description ? (
-            <p className="mt-6 text-base leading-7 text-zinc-700 dark:text-zinc-300">
-              {gem.description}
-            </p>
-          ) : null}
-
-          {tags.length > 0 ? (
-            <div className="mt-6 flex flex-wrap gap-2">
-              {tags.map((t) => (
-                <span
-                  key={t}
-                  className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-200"
-                >
-                  {t}
+        {/* ── Header ── */}
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                <span>Skill Gem</span>
+                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold capitalize ${gemTypeBadgeClass(gem.gem_type)}`}>
+                  {gem.gem_type}
                 </span>
+                {gem.is_kalguuran && (
+                  <span className="inline-flex items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[10px] font-semibold text-violet-300">
+                    Kalguuran
+                  </span>
+                )}
+                {gem.consumes_ward && (
+                  <span className="inline-flex items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-300">
+                    Consumes Ward
+                  </span>
+                )}
+              </div>
+              <h1 className="mt-1 text-3xl font-semibold tracking-tight text-white/95 sm:text-4xl">{name}</h1>
+            </div>
+          </div>
+
+          {gem.description && (
+            <p className="mt-6 max-w-3xl text-base leading-7 text-white/70">{gem.description}</p>
+          )}
+        </section>
+
+        {/* ── Quick Stats ── */}
+        <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {[
+            { label: "Cost", value: gem.cost.base_value > 0 ? `${gem.cost.base_value} ${gem.cost.resource}` : gem.cost.resource },
+            { label: "Cast Time", value: gem.cast_time !== null ? `${gem.cast_time}s` : "Instant" },
+            { label: "Crit Chance", value: gem.critical_chance !== null ? `${gem.critical_chance}%` : "—" },
+            { label: "Max Level", value: String(gem.max_level) },
+            { label: "Cooldown", value: gem.cooldown !== null ? `${gem.cooldown}s` : "None" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-white/40">{s.label}</div>
+              <div className="mt-1 text-sm font-medium text-white/90">{s.value}</div>
+            </div>
+          ))}
+        </section>
+
+        {/* ── Gem Effects (stat text) ── */}
+        {statLines.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-base font-semibold text-white/95">Gem Effects</h2>
+            <p className="mt-1 text-xs text-white/40">Full modifier text from the in-game tooltip</p>
+            <div className="mt-4 rounded-xl border border-white/8 bg-black/20 p-4">
+              <div className="space-y-1.5 text-sm leading-6 text-white/80 font-mono">
+                {statLines.map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── Requirements ── */}
+        {(gem.weapon_requirements.length > 0 || nonZeroAttrs.length > 0) && (
+          <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-base font-semibold text-white/95">Requirements</h2>
+
+            {gem.weapon_requirements.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">Weapon Type</h3>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {gem.weapon_requirements.map((w) => (
+                    <span key={w} className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-300">
+                      {w}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {nonZeroAttrs.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">Attributes</h3>
+                <div className="mt-2 flex flex-wrap gap-4">
+                  {nonZeroAttrs.map((attr) => (
+                    <div key={attr} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-center">
+                      <div className={`text-lg font-bold ${attrColor(attr)}`}>{gem.attribute_requirements[attr]}</div>
+                      <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-white/40">{attrLabel(attr)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ── Per-Level Scaling (only if meaningful data) ── */}
+        {hasScaling && (
+          <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-base font-semibold text-white/95">Per-Level Scaling</h2>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {gem.per_level.damage_multiplier !== 1.0 && (
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-white/40">Damage / Level</div>
+                  <div className="mt-1 text-sm font-medium text-white/90">×{gem.per_level.damage_multiplier}</div>
+                </div>
+              )}
+              {gem.per_level.mana_cost_multiplier !== 1.0 && (
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-white/40">Mana Cost / Level</div>
+                  <div className="mt-1 text-sm font-medium text-white/90">×{gem.per_level.mana_cost_multiplier}</div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ── Key Mechanics Explained (related affix descriptions) ── */}
+        {mechanics.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-base font-semibold text-white/95">Key Mechanics</h2>
+            <p className="mt-1 text-xs text-white/40">Game terms referenced by this gem</p>
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {mechanics.map((m) => (
+                <div key={m.term} className="rounded-xl border border-white/8 bg-white/[0.02] p-4">
+                  <h3 className="text-sm font-semibold text-[#F2BF43]">{m.term}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-white/60">{m.explanation}</p>
+                </div>
               ))}
             </div>
-          ) : null}
-        </section>
+          </section>
+        )}
+
+        {/* ── Recommended Builds ── */}
+        {buildSuggestions.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-base font-semibold text-white/95">Recommended Builds</h2>
+            <p className="mt-1 text-xs text-white/40">
+              Build archetypes where {name} can shine
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {buildSuggestions.map((b) => (
+                <div key={b.title} className="rounded-xl border border-white/8 bg-white/[0.02] p-4">
+                  <h3 className="text-sm font-semibold text-white/90">{b.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-white/60">{b.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Suggested Support Gems (for active gems) ── */}
+        {suggestedSupports.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-base font-semibold text-white/95">Suggested Support Gems</h2>
+            <p className="mt-1 text-xs text-white/40">
+              Supports that pair well with {name} based on shared mechanics
+            </p>
+            <div className="mt-4 flex flex-col gap-2">
+              {suggestedSupports.map((s) => (
+                <Link
+                  key={s.slug}
+                  href={`/db/gems/${s.slug}`}
+                  className="p2-nav-link flex items-start gap-3 rounded-xl border border-white/8 bg-white/[0.02] p-3 transition-colors hover:bg-white/[0.05] hover:border-[#F2BF43]/30"
+                >
+                  <span className="shrink-0 inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-300 mt-0.5">
+                    support
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-white/90">{s.name}</div>
+                    <div className="mt-0.5 text-xs text-white/50 line-clamp-1">{s.description}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Related Gems ── */}
+        {related.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-base font-semibold text-white/95">Related Gems</h2>
+            <p className="mt-1 text-xs text-white/40">
+              Gems with similar mechanics or damage types
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {related.map((r) => (
+                <Link
+                  key={r.slug}
+                  href={`/db/gems/${r.slug}`}
+                  className="p2-nav-link rounded-xl border border-white/8 bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.05] hover:border-[#F2BF43]/30"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-white/90">{r.name}</span>
+                    <span className={`shrink-0 inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium capitalize ${gemTypeBadgeClass(r.gem_type)}`}>
+                      {r.gem_type}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-white/50 line-clamp-2">{r.description}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Cross-promote ── */}
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
+          <Link
+            href="/db/gems"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:border-[#F2BF43]/40 hover:text-[#F2BF43]"
+          >
+            ← Back to Gems Database
+          </Link>
+          <Link
+            href="/tools/rune-combinations"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:border-[#F2BF43]/40 hover:text-[#F2BF43]"
+          >
+            Rune Combinations Tool →
+          </Link>
+        </div>
       </main>
     </div>
   );

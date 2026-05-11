@@ -72,10 +72,10 @@ export function DataStatusCallout({
 
   const copy =
     meta.status === "current"
-      ? "This dataset is up to date."
+      ? "Matches the latest patch we have on file."
       : meta.status === "updating"
-        ? "This dataset is being updated."
-        : "This dataset may be out of date.";
+        ? "We are refreshing this page after a patch."
+        : "May be a little behind the live game — use in-game tooltips as the final word.";
 
   return (
     <div className={["rounded-2xl border px-4 py-3", v.wrapper].join(" ")}>
@@ -84,7 +84,7 @@ export function DataStatusCallout({
           <span className={["h-2.5 w-2.5 rounded-full", v.dot].join(" ")} />
           <div className="text-sm">
             <div className="font-medium">
-              {title ?? "Data status"}{" "}
+              {title ?? "Data"}{" "}
               <span className="font-normal opacity-80">— {copy}</span>
             </div>
             <div className="text-xs opacity-80">

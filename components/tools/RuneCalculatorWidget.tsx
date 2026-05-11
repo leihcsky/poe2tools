@@ -29,9 +29,9 @@ type Suggestion = {
 
 type ApiResponse = {
   inputIds: string[];
-  normalizedIds: string[];
-  missingIds: string[];
   suggestions: Suggestion[];
+  normalizedIds?: string[];
+  missingIds?: string[];
 };
 
 type Props = {
@@ -98,6 +98,37 @@ function goalHelp(goal: Goal): string {
   if (goal === "loot") return "Favors reward-oriented patterns and safer tradeoffs.";
   if (goal === "challenge") return "Leans into harder setups and progression pressure.";
   return "Favors smoother runs and manageable difficulty.";
+}
+
+type LoadoutSummary = {
+  avgDifficulty: number;
+  slotTotal: number;
+  topTags: string[];
+  count: number;
+};
+
+function loadoutSummary(ids: string[], byId: Map<string, Rune>): LoadoutSummary | null {
+  const list = ids.map((id) => byId.get(id)).filter((x): x is Rune => !!x);
+  if (list.length === 0) return null;
+  const slotTotal = list.reduce((a, r) => a + r.slotCost, 0);
+  const avgDifficulty = list.reduce((a, r) => a + r.difficultyRating, 0) / list.length;
+  const tagCounts = new Map<string, number>();
+  for (const r of list) {
+    for (const t of r.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
+  }
+  const topTags = Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 4)
+    .map(([t]) => t);
+  return { avgDifficulty, slotTotal, topTags, count: list.length };
+}
+
+function diffLoadout(suggestedIds: string[], baseIds: string[]) {
+  const base = new Set(baseIds);
+  const next = new Set(suggestedIds);
+  const added = suggestedIds.filter((id) => !base.has(id));
+  const removed = baseIds.filter((id) => !next.has(id));
+  return { added, removed };
 }
 
 export default function RuneCalculatorWidget({ runes }: Props) {
@@ -276,7 +307,7 @@ export default function RuneCalculatorWidget({ runes }: Props) {
   }, [selectedRunes]);
 
   return (
-    <section className="mt-8 p2-section overflow-hidden">
+    <section className="p2-section overflow-hidden">
       <div className="border-b border-zinc-200 px-6 py-5 dark:border-zinc-800 p2-divider">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -284,7 +315,7 @@ export default function RuneCalculatorWidget({ runes }: Props) {
               Build your rune loadout
             </h2>
             <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              Select up to {MAX_SLOTS} runes, then compare impact and ask for improvements.
+              Up to {MAX_SLOTS} runes: pick a goal, add runes on the left, review stats and effects on the right.
             </p>
           </div>
 
@@ -298,7 +329,7 @@ export default function RuneCalculatorWidget({ runes }: Props) {
                   className={[
                     "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
                     goal === g
-                      ? "bg-gradient-to-r from-violet-600 to-cyan-500 text-white"
+                      ? "bg-[#F2BF43] text-black"
                       : "text-white/80 hover:bg-white/5",
                   ].join(" ")}
                 >
@@ -315,7 +346,12 @@ export default function RuneCalculatorWidget({ runes }: Props) {
             </Button>
           </div>
         </div>
-        <div className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">{goalHelp(goal)}</div>
+        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <div className="text-xs text-zinc-500 dark:text-zinc-400">{goalHelp(goal)}</div>
+          <a href="#rune-calculator-how-to" className="shrink-0 text-xs p2-link">
+            How to use this tool
+          </a>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-[360px_1fr]">
@@ -403,7 +439,7 @@ export default function RuneCalculatorWidget({ runes }: Props) {
           <div className="mt-4 max-h-[520px] overflow-auto pr-1">
             {allRunes.length === 0 ? (
               <div className="p2-card px-4 py-3 text-sm">
-                Rune data is not available yet. Check the dataset status above and try again later.
+                Rune data is not available yet. Check the notice above and try again later.
               </div>
             ) : filtered.length === 0 ? (
               <div className="p2-card px-4 py-3 text-sm">
@@ -418,21 +454,35 @@ export default function RuneCalculatorWidget({ runes }: Props) {
                     <button
                       key={r.id}
                       type="button"
+                      aria-pressed={selected}
                       onClick={() => toggleRune(r.id)}
                       disabled={disabled}
                       className={[
-                        "w-full p2-card px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+                        "relative w-full overflow-hidden rounded-xl border px-4 py-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60",
                         selected
-                          ? "ring-1 ring-violet-400/60 bg-white/6"
-                          : "hover:bg-white/6",
+                          ? "border-[#F2BF43]/70 bg-[#F2BF43]/12 shadow-[0_0_0_1px_rgba(242,191,67,0.35)] ring-2 ring-[#F2BF43]/45"
+                          : "border-zinc-200/80 bg-white/5 hover:border-zinc-300 hover:bg-white/[0.08] dark:border-zinc-800 dark:bg-zinc-950/40 dark:hover:border-zinc-700 dark:hover:bg-white/[0.06]",
                       ].join(" ")}
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                      {selected ? (
+                        <span
+                          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-[#F2BF43]"
+                          aria-hidden
+                        />
+                      ) : null}
+                      <div className="flex items-center justify-between gap-3 pl-0.5">
+                        <div className="min-w-0 flex-1 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
                           {r.name ?? r.id}
                         </div>
-                        <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {typeof r.tier === "number" ? `Tier ${r.tier}` : ""}
+                        <div className="flex shrink-0 items-center gap-2">
+                          {selected ? (
+                            <span className="rounded-full bg-[#F2BF43]/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#F2BF43] ring-1 ring-[#F2BF43]/45">
+                              In setup
+                            </span>
+                          ) : null}
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {typeof r.tier === "number" ? `Tier ${r.tier}` : ""}
+                          </div>
                         </div>
                       </div>
                       <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
@@ -459,21 +509,11 @@ export default function RuneCalculatorWidget({ runes }: Props) {
         </div>
 
         <div className="px-6 py-6">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-              Current setup
-            </div>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="secondary" onClick={copyShareUrl} disabled={selectedIds.length === 0}>
-                {copySuccess ? "Copied!" : "Share"}
-              </Button>
-              <Button type="button" variant="secondary" onClick={clearSelection} disabled={selectedIds.length === 0}>
-                Clear
-              </Button>
-            </div>
+          <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+            Current setup
           </div>
 
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="p2-card px-4 py-3">
               <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                 Difficulty Rating (avg)
@@ -524,16 +564,18 @@ export default function RuneCalculatorWidget({ runes }: Props) {
                 )}
               </div>
             </div>
-            <div className="p2-card px-4 py-3">
-              <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                Quick actions
-              </div>
-              <div className="mt-2 grid grid-cols-1 gap-2">
-                <Button type="button" onClick={recommend} disabled={isLoading || allRunes.length === 0}>
-                  {isLoading ? "Working…" : "Get recommendations"}
-                </Button>
-              </div>
-            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button type="button" onClick={copyShareUrl} disabled={selectedIds.length === 0}>
+              {copySuccess ? "Copied!" : "Share"}
+            </Button>
+            <Button type="button" onClick={clearSelection} disabled={selectedIds.length === 0}>
+              Clear
+            </Button>
+            <Button type="button" onClick={recommend} disabled={isLoading || allRunes.length === 0}>
+              {isLoading ? "Working…" : "Get recommendations"}
+            </Button>
           </div>
 
           <div className="mt-6 p2-card p-5">
@@ -600,27 +642,112 @@ export default function RuneCalculatorWidget({ runes }: Props) {
               <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
                 Recommendations
               </div>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                Each card is one full loadout ranked for your goal. Skim the stats and rune notes first — names alone
+                do not tell the whole story. Tap Apply to load that loadout and compare it in Effects and rewards
+                above.
+              </p>
               <div className="mt-4 grid grid-cols-1 gap-3">
-                {result.suggestions.map((s, idx) => (
-                  <div key={idx} className="p2-card p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-xs font-bold uppercase tracking-wider text-violet-400">
-                        {s.kind === "best" ? "Top Choice" : s.kind === "improve" ? "Better Fit" : "Strong Synergy"}
+                {result.suggestions.map((s, idx) => {
+                  const baseIds = Array.isArray(result.inputIds) ? result.inputIds : selectedIds;
+                  const summary = loadoutSummary(s.ids, byId);
+                  const { added, removed } = diffLoadout(s.ids, baseIds);
+                  const kindLabel =
+                    s.kind === "best" ? "Starter pick" : s.kind === "improve" ? "Swap idea" : "Add-on idea";
+
+                  return (
+                    <div key={idx} className="p2-card p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-xs font-bold uppercase tracking-wider text-[#F2BF43]">{kindLabel}</div>
+                          <div className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                            Option {idx + 1} of {result.suggestions.length}
+                          </div>
+                        </div>
+                        <Button type="button" size="sm" variant="primary" onClick={() => applySuggestion(s.ids)}>
+                          Apply
+                        </Button>
                       </div>
-                      <Button type="button" size="sm" variant="secondary" onClick={() => applySuggestion(s.ids)}>
-                        Apply
-                      </Button>
+
+                      {summary ? (
+                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-zinc-700 dark:text-zinc-200">
+                          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
+                            Avg difficulty {summary.avgDifficulty.toFixed(1)}/5
+                          </span>
+                          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
+                            Slots {summary.slotTotal}/{MAX_SLOTS}
+                          </span>
+                          {summary.topTags.length > 0 ? (
+                            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5">
+                              Tags: {summary.topTags.join(", ")}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {(removed.length > 0 || added.length > 0) && (
+                        <div className="mt-3 space-y-1 text-xs text-zinc-600 dark:text-zinc-300">
+                          {removed.length > 0 ? (
+                            <div>
+                              <span className="font-medium text-zinc-800 dark:text-zinc-200">Removes: </span>
+                              {removed.map((id) => byId.get(id)?.name ?? id).join(", ")}
+                            </div>
+                          ) : null}
+                          {added.length > 0 ? (
+                            <div>
+                              <span className="font-medium text-zinc-800 dark:text-zinc-200">Adds: </span>
+                              {added.map((id) => byId.get(id)?.name ?? id).join(", ")}
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
+
+                      {added.length > 0 ? (
+                        <div className="mt-3 space-y-2">
+                          {added.map((id) => {
+                            const r = byId.get(id);
+                            if (!r) return null;
+                            return (
+                              <div
+                                key={id}
+                                className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs dark:bg-black/30"
+                              >
+                                <div className="font-semibold text-zinc-950 dark:text-zinc-50">{r.name}</div>
+                                <div className="mt-1 line-clamp-2 leading-relaxed text-zinc-600 dark:text-zinc-300">
+                                  {r.effect}
+                                </div>
+                                <div className="mt-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                                  {r.reward}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+
+                      {s.reason ? (
+                        <div className="mt-3 border-t border-zinc-200 pt-2 text-xs italic text-zinc-600 dark:border-white/10 dark:text-zinc-400">
+                          {s.reason}
+                        </div>
+                      ) : null}
+
+                      {s.ids.length > 1 ? (
+                        <details className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+                          <summary className="cursor-pointer select-none p2-link text-[11px]">
+                            Full loadout names ({summary?.count ?? s.ids.length} runes)
+                          </summary>
+                          <div className="mt-1.5 leading-relaxed text-zinc-700 dark:text-zinc-300">
+                            {s.ids.map((id) => byId.get(id)?.name ?? id).join(" · ")}
+                          </div>
+                        </details>
+                      ) : (
+                        <div className="mt-2 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                          {s.ids.map((id) => byId.get(id)?.name ?? id).join(" · ")}
+                        </div>
+                      )}
                     </div>
-                    <div className="mt-2 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-                      {s.ids.map((id) => byId.get(id)?.name ?? id).join(" · ")}
-                    </div>
-                    {s.reason && (
-                      <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-                        {s.reason}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : null}

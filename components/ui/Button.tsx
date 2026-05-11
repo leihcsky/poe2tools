@@ -18,7 +18,7 @@ export default function Button({
   
   const variantStyles =
     variant === "primary"
-      ? "bg-gradient-to-r from-violet-600 to-cyan-500 text-white hover:from-violet-500 hover:to-cyan-400"
+      ? "bg-[#F2BF43] text-black hover:bg-[#e5b23d] active:bg-[#d4a436]"
       : "border border-zinc-200 bg-white/80 text-zinc-950 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/60 dark:text-white dark:hover:bg-zinc-900/30";
   
   const merged = [base, sizeStyles, variantStyles, className].filter(Boolean).join(" ");

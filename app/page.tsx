@@ -1,4 +1,7 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { listGuideSlugs, readGuide } from "@/lib/guides";
 
@@ -54,9 +57,26 @@ function formatShortDate(iso: string): string {
   return new Intl.DateTimeFormat("en", { month: "short", day: "2-digit" }).format(d);
 }
 
+async function countJson(file: string, key: string): Promise<number> {
+  try {
+    const raw = await readFile(path.join(process.cwd(), "data", file), "utf8");
+    const parsed = JSON.parse(raw.trim());
+    const arr = parsed?.[key];
+    return Array.isArray(arr) ? arr.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export default async function Home() {
   const patchVersion = process.env.NEXT_PUBLIC_PATCH_VERSION ?? "0.5";
   const patchName = process.env.NEXT_PUBLIC_PATCH_NAME ?? "Return of the Ancients";
+
+  const [gemCount, uniqueCount] = await Promise.all([
+    countJson("gems.json", "gems"),
+    countJson("uniques.json", "items"),
+  ]);
+
   const guideSlugs = await listGuideSlugs();
   const guideDocs = await Promise.all(guideSlugs.map((s) => readGuide(s)));
   const latest = guideDocs
@@ -99,7 +119,8 @@ export default async function Home() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/tools/rune-combinations"
-                className="inline-flex h-10 items-center justify-center rounded-full bg-gradient-to-r from-violet-600 to-cyan-500 px-5 text-sm font-medium text-white transition-colors hover:from-violet-500 hover:to-cyan-400"
+                className="p2-cta-primary inline-flex h-10 items-center justify-center rounded-full bg-[#F2BF43] px-5 text-sm font-medium transition-colors hover:bg-[#e5b23d] active:bg-[#d4a436]"
+                style={{ color: "#0a0a0a" }}
               >
                 Rune Combination Calculator
               </Link>
@@ -207,29 +228,28 @@ export default async function Home() {
                 </div>
               </Link>
 
-              <Link
-                href="/tools/verisium-craft"
-                className="p2-card p-5 transition-colors hover:bg-white/5"
-              >
+              <div className="p2-card p-5 text-left opacity-75">
                 <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
                   Verisium Crafting Simulator
                 </div>
                 <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                   Compare crafting routes and expected cost per outcome.
                 </div>
-                <div className="mt-3 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-                  Crafting
+                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-300">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Coming soon
                 </div>
-              </Link>
+              </div>
 
-              <div className="p2-card p-5 text-left">
+              <div className="p2-card p-5 text-left opacity-75">
                 <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
                   Atlas Planner
                 </div>
                 <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                   Visual planning for the endgame Atlas tree.
                 </div>
-                <div className="mt-3 inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-200">
+                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-300">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
                   Coming soon
                 </div>
               </div>
@@ -249,27 +269,46 @@ export default async function Home() {
               </Link>
             </div>
 
-            <div className="mt-4 divide-y divide-zinc-200 dark:divide-zinc-800 p2-divider">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
               {latest.map((g) => (
                 <Link
                   key={g.slug}
                   href={`/guides/${g.slug}`}
-                  className="flex items-center gap-3 py-3 transition-colors hover:bg-white/4"
+                  className="group overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] transition-all hover:border-[#F2BF43]/30 hover:bg-white/[0.06]"
                 >
-                  <span
-                    className={[
-                      "inline-flex w-28 items-center justify-center rounded-full border px-3 py-1 text-xs font-medium",
-                      categoryPillClass(g.frontmatter.category),
-                    ].join(" ")}
-                  >
-                    {categoryLabel(g.frontmatter.category)}
-                  </span>
-                  <span className="flex-1 text-sm font-medium text-zinc-950 dark:text-zinc-50">
-                    {g.frontmatter.title}
-                  </span>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {formatShortDate(g.frontmatter.date)}
-                  </span>
+                  {g.frontmatter.image && (
+                    <div className="relative h-28 w-full overflow-hidden bg-white/5">
+                      <Image
+                        src={g.frontmatter.image}
+                        alt={g.frontmatter.title}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                      />
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={[
+                          "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                          categoryPillClass(g.frontmatter.category),
+                        ].join(" ")}
+                      >
+                        {categoryLabel(g.frontmatter.category)}
+                      </span>
+                      <span className="text-[10px] text-white/40">
+                        {formatShortDate(g.frontmatter.date)}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm font-semibold text-white/95 group-hover:text-[#F2BF43] transition-colors line-clamp-2">
+                      {g.frontmatter.title}
+                    </div>
+                    {g.frontmatter.excerpt && (
+                      <div className="mt-1 text-xs leading-relaxed text-white/55 line-clamp-2">
+                        {g.frontmatter.excerpt}
+                      </div>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -304,7 +343,9 @@ export default async function Home() {
                 href="/db/gems"
                 className="p2-card p-5 text-center transition-colors hover:bg-white/5"
               >
-                <div className="text-2xl font-semibold text-indigo-700 dark:text-indigo-200">—</div>
+                <div className="text-2xl font-semibold text-indigo-700 dark:text-indigo-200">
+                  {gemCount > 0 ? `${gemCount}` : "—"}
+                </div>
                 <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                   Skill gems
                 </div>
@@ -314,7 +355,7 @@ export default async function Home() {
                 className="p2-card p-5 text-center transition-colors hover:bg-white/5"
               >
                 <div className="text-2xl font-semibold text-amber-800 dark:text-amber-200">
-                  40+
+                  {uniqueCount > 0 ? `${uniqueCount}` : "—"}
                 </div>
                 <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                   Unique items

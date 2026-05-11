@@ -2,10 +2,24 @@ import GuidesIndexClient, {
   type GuideListItem,
 } from "@/components/guides/GuidesIndexClient";
 import { listGuideSlugs, readGuide } from "@/lib/guides";
+import type { Metadata } from "next";
 
 export const runtime = "nodejs";
 export const dynamic = "force-static";
 export const revalidate = 60 * 60;
+
+export const metadata: Metadata = {
+  title: "POE2 Guides — Patch 0.5 Runes of Aldur, Builds & Beginner Tips",
+  description:
+    "POE2 guides for Path of Exile 2 Patch 0.5: Runes of Aldur explained, patch-day prep checklist, beginner first-hours walkthrough, and endgame strategies.",
+  alternates: { canonical: "/guides" },
+  openGraph: {
+    title: "POE2 Guides — Patch 0.5 Runes of Aldur, Builds & Beginner Tips",
+    description:
+      "POE2 guides for Path of Exile 2 Patch 0.5: Runes of Aldur explained, patch-day prep checklist, beginner first-hours walkthrough, and endgame strategies.",
+    url: "/guides",
+  },
+};
 
 export default async function GuidesIndexPage() {
   const patchVersion = process.env.NEXT_PUBLIC_PATCH_VERSION ?? "0.5";

@@ -158,16 +158,27 @@ function NavLink({
   href,
   children,
   onNavigate,
+  pathname,
 }: {
   href: string;
   children: React.ReactNode;
   onNavigate?: () => void;
+  pathname: string;
 }) {
+  const isActive =
+    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+
   return (
     <Link
       href={href}
       onClick={() => onNavigate?.()}
-      className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+      aria-current={isActive ? "page" : undefined}
+      className={[
+        "p2-nav-link inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+        isActive
+          ? "bg-[#F2BF43]/15 text-[#F2BF43] ring-1 ring-[#F2BF43]/35"
+          : "text-white/80 hover:bg-white/10 hover:text-white",
+      ].join(" ")}
     >
       {children}
     </Link>
@@ -193,7 +204,7 @@ function DropDownItem({
     <Link
       href={href}
       onClick={() => onNavigate?.()}
-      className="flex items-start gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-white/6"
+      className="p2-nav-link flex items-start gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-white/6"
     >
       <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600/35 to-cyan-500/25 text-white/90 ring-1 ring-white/10">
         {icon}
@@ -221,6 +232,7 @@ function Menu({
   openId,
   onOpen,
   onClose,
+  isActive = false,
 }: {
   id: string;
   label: string;
@@ -231,6 +243,7 @@ function Menu({
   openId: string | null;
   onOpen: () => void;
   onClose: () => void;
+  isActive?: boolean;
 }) {
   const isOpen = openId === id;
 
@@ -244,7 +257,12 @@ function Menu({
         <button
           type="button"
           onClick={() => (isOpen ? onClose() : onOpen())}
-          className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+          className={[
+            "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+            isActive
+              ? "bg-[#F2BF43]/15 text-[#F2BF43] ring-1 ring-[#F2BF43]/35"
+              : "text-white/80 hover:bg-white/10 hover:text-white",
+          ].join(" ")}
           aria-expanded={isOpen}
         >
           {icon}
@@ -285,7 +303,7 @@ export default function SiteHeader() {
   }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-[150] w-full border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-[#070b15]/70">
+    <header className="site-header sticky top-0 z-[150] w-full border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-[#070b15]/70">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
         <Link
           href="/"
@@ -300,7 +318,7 @@ export default function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-          <NavLink href="/" onNavigate={closeMenus}>
+          <NavLink href="/" pathname={pathname} onNavigate={closeMenus}>
             <IconHome className="h-4 w-4" />
             Home
           </NavLink>
@@ -310,6 +328,7 @@ export default function SiteHeader() {
             label="Tools"
             icon={<IconTools className="h-4 w-4" />}
             align="left"
+            isActive={pathname.startsWith("/tools")}
             openId={openId}
             onOpen={() => setOpenId("tools")}
             onClose={() => setOpenId((v) => (v === "tools" ? null : v))}
@@ -343,10 +362,15 @@ export default function SiteHeader() {
                     }
                   />
                   <DropDownItem
-                    href="/tools/verisium-craft"
+                    href="/tools"
                     icon={<IconFlask className="h-4 w-4" />}
                     title="Verisium Crafting Simulator"
                     description="Compare crafting paths and expected cost."
+                    badge={
+                      <span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-200">
+                        Coming soon
+                      </span>
+                    }
                   />
                   <DropDownItem
                     href="/tools"
@@ -399,6 +423,7 @@ export default function SiteHeader() {
             label="Guides"
             icon={<IconCompass className="h-4 w-4" />}
             align="left"
+            isActive={pathname.startsWith("/guides")}
             openId={openId}
             onOpen={() => setOpenId("guides")}
             onClose={() => setOpenId((v) => (v === "guides" ? null : v))}
@@ -472,6 +497,7 @@ export default function SiteHeader() {
             icon={<IconDatabase className="h-4 w-4" />}
             align="right"
             maxWidth="460px"
+            isActive={pathname.startsWith("/db")}
             openId={openId}
             onOpen={() => setOpenId("database")}
             onClose={() => setOpenId((v) => (v === "database" ? null : v))}

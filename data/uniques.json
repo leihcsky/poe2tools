@@ -1,8 +1,354 @@
 {
   "meta": {
     "patch_version": "0.5",
-    "last_updated": "2026-05-29",
-    "status": "updating"
+    "last_updated": "2026-05-12",
+    "status": "placeholder"
   },
-  "uniques": []
+  "items": [
+    {
+      "id": "mageblood",
+      "slug": "mageblood",
+      "name": "Mageblood",
+      "base_item": "Heavy Belt",
+      "item_class": "Belt",
+      "required_level": 44,
+      "implicit_mods": [
+        { "text": "+(25-35) to maximum Life", "min": 25, "max": 35, "type": "flat_life" }
+      ],
+      "explicit_mods": [
+        { "text": "+(20-30) to Strength", "min": 20, "max": 30, "type": "flat_str" },
+        { "text": "(3-4) Flask Slots are always active", "min": 3, "max": 4, "type": "flask_effect" },
+        { "text": "Flasks gain (5-8) charges every 3 seconds", "min": 5, "max": 8, "type": "flask_charge_gain" }
+      ],
+      "flavour_text": "The river does not ask where the ocean begins.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "boss", "name": "The Arbiter of Ash" },
+        { "type": "div_card", "name": "The Apothecary" }
+      ],
+      "use_cases": [
+        "Enables permanent Flask uptime — a massive QoL and power boost for any build.",
+        "Best-in-slot for endgame mapping and bossing where Flask sustain matters.",
+        "Frees up passive tree points that would otherwise go toward Flask duration."
+      ],
+      "tags": ["belt", "endgame", "flask"],
+      "image_url": "/images/uniques/mageblood.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "headhunter",
+      "slug": "headhunter",
+      "name": "Headhunter",
+      "base_item": "Leather Belt",
+      "item_class": "Belt",
+      "required_level": 40,
+      "implicit_mods": [
+        { "text": "+(25-40) to maximum Life", "min": 25, "max": 40, "type": "flat_life" }
+      ],
+      "explicit_mods": [
+        { "text": "+(40-55) to Strength", "min": 40, "max": 55, "type": "flat_str" },
+        { "text": "+(40-55) to Dexterity", "min": 40, "max": 55, "type": "flat_dex" },
+        { "text": "+(50-60) to maximum Life", "min": 50, "max": 60, "type": "flat_life" },
+        { "text": "When you Kill a Rare Monster, you gain its Mods for 20 seconds", "min": null, "max": null, "type": "special" }
+      ],
+      "flavour_text": "A man's head is his most valuable possession. Figuratively and literally.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "div_card", "name": "The Doctor" },
+        { "type": "div_card", "name": "The Nurse" }
+      ],
+      "use_cases": [
+        "The ultimate mapping belt — stealing Rare monster mods creates absurd power spikes.",
+        "Transforms any build into a screen-clearing machine during juiced maps.",
+        "Best paired with fast-clearing builds that encounter many Rare monsters."
+      ],
+      "tags": ["belt", "endgame", "mapping"],
+      "image_url": "/images/uniques/headhunter.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "kaoms-heart",
+      "slug": "kaoms-heart",
+      "name": "Kaom's Heart",
+      "base_item": "Glorious Plate",
+      "item_class": "Body Armour",
+      "required_level": 68,
+      "implicit_mods": [],
+      "explicit_mods": [
+        { "text": "+(500-600) to maximum Life", "min": 500, "max": 600, "type": "flat_life" },
+        { "text": "Has no Sockets", "min": null, "max": null, "type": "special" },
+        { "text": "(20-40)% increased Fire Damage", "min": 20, "max": 40, "type": "fire_damage" }
+      ],
+      "flavour_text": "The warrior who fears nothing is master of all.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "boss", "name": "The Volcano" },
+        { "type": "div_card", "name": "The King's Heart" }
+      ],
+      "use_cases": [
+        "Massive Life pool for builds that don't need body armour sockets.",
+        "Popular for RF (Righteous Fire) builds and other Fire damage builds.",
+        "Pairs with Unset Rings or other socket sources to compensate for zero sockets."
+      ],
+      "tags": ["body armour", "life", "fire"],
+      "image_url": "/images/uniques/kaoms-heart.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "aegis-aurora",
+      "slug": "aegis-aurora",
+      "name": "Aegis Aurora",
+      "base_item": "Champion Kite Shield",
+      "item_class": "Shield",
+      "required_level": 62,
+      "implicit_mods": [
+        { "text": "+(12-15)% to all Elemental Resistances", "min": 12, "max": 15, "type": "all_res" }
+      ],
+      "explicit_mods": [
+        { "text": "(300-400) Armour", "min": 300, "max": 400, "type": "flat_armour" },
+        { "text": "(20-30) Energy Shield", "min": 20, "max": 30, "type": "flat_es" },
+        { "text": "Replenishes Energy Shield by 2% of Armour when you Block", "min": null, "max": null, "type": "special" },
+        { "text": "+5% Chance to Block", "min": 5, "max": 5, "type": "block_chance" }
+      ],
+      "flavour_text": "Born of Winter, forged in the heart of the mountain.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "drop", "name": "Any endgame map boss" }
+      ],
+      "use_cases": [
+        "Core item for Armour-stacking tank builds that also invest in Block.",
+        "Converts Armour investment into ES recovery, creating near-immortal characters.",
+        "Best-in-slot shield for any build pairing Determination + high Block chance."
+      ],
+      "tags": ["shield", "block", "tank", "energy shield"],
+      "image_url": "/images/uniques/aegis-aurora.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "ashes-of-the-stars",
+      "slug": "ashes-of-the-stars",
+      "name": "Ashes of the Stars",
+      "base_item": "Onyx Amulet",
+      "item_class": "Amulet",
+      "required_level": 60,
+      "implicit_mods": [
+        { "text": "+(10-16) to all Attributes", "min": 10, "max": 16, "type": "all_attr" }
+      ],
+      "explicit_mods": [
+        { "text": "+(10-20)% to Quality of all Skill Gems", "min": 10, "max": 20, "type": "gem_quality" },
+        { "text": "+1 to Level of all Skill Gems", "min": 1, "max": 1, "type": "gem_level" },
+        { "text": "(10-15)% increased Reservation Efficiency", "min": 10, "max": 15, "type": "reservation" }
+      ],
+      "flavour_text": "Some burn to illuminate. Others burn to empower.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "boss", "name": "The Eater of Worlds" }
+      ],
+      "use_cases": [
+        "Universal gem-boosting amulet — +1 Level and Quality enhance every linked skill.",
+        "Particularly strong for builds that heavily benefit from gem quality (e.g., AoE, Duration).",
+        "Reservation Efficiency frees up mana/spirit for an extra Aura."
+      ],
+      "tags": ["amulet", "gem", "reservation"],
+      "image_url": "/images/uniques/ashes-of-the-stars.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "heatshiver",
+      "slug": "heatshiver",
+      "name": "Heatshiver",
+      "base_item": "Leather Cap",
+      "item_class": "Helmet",
+      "required_level": 28,
+      "implicit_mods": [],
+      "explicit_mods": [
+        { "text": "+(40-60) to maximum Life", "min": 40, "max": 60, "type": "flat_life" },
+        { "text": "(20-30)% increased Cold Damage", "min": 20, "max": 30, "type": "cold_damage" },
+        { "text": "Gain 100% of Cold Damage as Extra Fire Damage against Frozen Enemies", "min": null, "max": null, "type": "special" },
+        { "text": "+(20-30)% to Cold Resistance", "min": 20, "max": 30, "type": "cold_res" }
+      ],
+      "flavour_text": "Between ice and flame, all that remains is power.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "drop", "name": "Global drop" }
+      ],
+      "use_cases": [
+        "Best-in-slot for Cold builds that can reliably Freeze enemies — effectively doubles damage.",
+        "Popular with Ice Spear, Freezing Pulse, and other high-Freeze skills.",
+        "Budget-friendly option that rivals expensive Rare helmets in terms of DPS."
+      ],
+      "tags": ["helmet", "cold", "fire", "damage"],
+      "image_url": "/images/uniques/heatshiver.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "nimis",
+      "slug": "nimis",
+      "name": "Nimis",
+      "base_item": "Topaz Ring",
+      "item_class": "Ring",
+      "required_level": 48,
+      "implicit_mods": [
+        { "text": "+(20-30)% to Lightning Resistance", "min": 20, "max": 30, "type": "lightning_res" }
+      ],
+      "explicit_mods": [
+        { "text": "+(30-50) to maximum Mana", "min": 30, "max": 50, "type": "flat_mana" },
+        { "text": "Projectiles Return to you", "min": null, "max": null, "type": "special" },
+        { "text": "Projectiles are fired in random directions", "min": null, "max": null, "type": "special" }
+      ],
+      "flavour_text": "What goes out must come back in.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "boss", "name": "The Infinite Hunger" }
+      ],
+      "use_cases": [
+        "Doubles the effective hit count for Projectile builds — returning projectiles hit twice.",
+        "Best paired with shotgunning skills like Spark or Lightning Strike.",
+        "The 'random directions' downside is offset by projectile count and area coverage."
+      ],
+      "tags": ["ring", "projectile", "lightning"],
+      "image_url": "/images/uniques/nimis.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "dawnbreaker",
+      "slug": "dawnbreaker",
+      "name": "Dawnbreaker",
+      "base_item": "Colossal Tower Shield",
+      "item_class": "Shield",
+      "required_level": 58,
+      "implicit_mods": [
+        { "text": "+(20-25)% to Fire Resistance", "min": 20, "max": 25, "type": "fire_res" }
+      ],
+      "explicit_mods": [
+        { "text": "(150-200) Armour", "min": 150, "max": 200, "type": "flat_armour" },
+        { "text": "+(50-60) to maximum Life", "min": 50, "max": 60, "type": "flat_life" },
+        { "text": "(10-15)% of Physical Damage from Hits taken as Fire Damage", "min": 10, "max": 15, "type": "phys_as_fire" },
+        { "text": "(15-20)% increased Fire Damage", "min": 15, "max": 20, "type": "fire_damage" }
+      ],
+      "flavour_text": "The dawn that breaks the darkness is not gentle.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "drop", "name": "Global drop" }
+      ],
+      "use_cases": [
+        "Physical-to-Fire conversion enables powerful mitigation stacking with Fire Resistance.",
+        "Core for RF (Righteous Fire) tank setups that need both damage and defence.",
+        "Pairs well with Purity of Fire and other Fire-related Aura builds."
+      ],
+      "tags": ["shield", "fire", "tank"],
+      "image_url": "/images/uniques/dawnbreaker.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "forbidden-flame",
+      "slug": "forbidden-flame",
+      "name": "Forbidden Flame",
+      "base_item": "Cobalt Jewel",
+      "item_class": "Jewel",
+      "required_level": 20,
+      "implicit_mods": [],
+      "explicit_mods": [
+        { "text": "Allocates <Ascendancy Notable> if you have the matching modifier on Forbidden Flesh", "min": null, "max": null, "type": "special" }
+      ],
+      "flavour_text": "Duality is the foundation of all power.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "boss", "name": "Uber Pinnacle Boss" }
+      ],
+      "use_cases": [
+        "Unlocks an extra Ascendancy Notable when paired with matching Forbidden Flesh.",
+        "Enables build-defining combos from other Ascendancy classes.",
+        "Extremely valuable when it rolls a strong Notable like Forbidden Rite or Headsman."
+      ],
+      "tags": ["jewel", "ascendancy", "endgame"],
+      "image_url": "/images/uniques/forbidden-flame.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "seven-league-step",
+      "slug": "seven-league-step",
+      "name": "Seven-League Step",
+      "base_item": "Rawhide Boots",
+      "item_class": "Boots",
+      "required_level": 1,
+      "implicit_mods": [],
+      "explicit_mods": [
+        { "text": "50% increased Movement Speed", "min": 50, "max": 50, "type": "movement_speed" }
+      ],
+      "flavour_text": "Each step covers leagues, yet the journey never ends.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "drop", "name": "Global drop" },
+        { "type": "div_card", "name": "The Wretched" }
+      ],
+      "use_cases": [
+        "Pure speed boots — 50% MS is the highest single source in the game.",
+        "Ideal for levelling new characters or speed-farming low-tier content.",
+        "No other stats means you sacrifice defences, so it's a clear speed-vs-safety trade-off."
+      ],
+      "tags": ["boots", "movement", "levelling"],
+      "image_url": "/images/uniques/seven-league-step.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "original-sin",
+      "slug": "original-sin",
+      "name": "Original Sin",
+      "base_item": "Ruby Ring",
+      "item_class": "Ring",
+      "required_level": 52,
+      "implicit_mods": [
+        { "text": "+(20-30)% to Fire Resistance", "min": 20, "max": 30, "type": "fire_res" }
+      ],
+      "explicit_mods": [
+        { "text": "All Damage with Hits can Poison", "min": null, "max": null, "type": "special" },
+        { "text": "Enemies you hit have -10% to all Resistances", "min": -10, "max": -10, "type": "enemy_minus_res" },
+        { "text": "Your Hits cannot deal Chaos Damage", "min": null, "max": null, "type": "special" }
+      ],
+      "flavour_text": "Sin is merely another word for freedom.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "boss", "name": "Uber Maven" }
+      ],
+      "use_cases": [
+        "Universal Resistance shred — -10% to ALL enemy Resistances is a massive DPS boost.",
+        "Works in any build; the 'no Chaos Damage' downside rarely matters for non-Chaos builds.",
+        "'All Damage can Poison' opens interesting hybrid Poison scaling opportunities."
+      ],
+      "tags": ["ring", "damage", "endgame"],
+      "image_url": "/images/uniques/original-sin.png",
+      "patch_added": "0.5"
+    },
+    {
+      "id": "oriath-vigil",
+      "slug": "oriath-vigil",
+      "name": "Oriath's Vigil",
+      "base_item": "Archon Kite Shield",
+      "item_class": "Shield",
+      "required_level": 68,
+      "implicit_mods": [
+        { "text": "+(12-15)% to all Elemental Resistances", "min": 12, "max": 15, "type": "all_res" }
+      ],
+      "explicit_mods": [
+        { "text": "+(80-120) to Armour", "min": 80, "max": 120, "type": "flat_armour" },
+        { "text": "+(80-100) to maximum Life", "min": 80, "max": 100, "type": "flat_life" },
+        { "text": "Nearby Allies have +2% Chance to Block", "min": 2, "max": 2, "type": "nearby_block" },
+        { "text": "(10-15)% increased Area of Effect for Auras from your Skills", "min": 10, "max": 15, "type": "aura_aoe" }
+      ],
+      "flavour_text": "Stand behind me. I shall be your wall.",
+      "lore": "",
+      "drop_sources": [
+        { "type": "boss", "name": "Templar Laboratory" }
+      ],
+      "use_cases": [
+        "Support/Aura bot shield — extends Aura range and provides Block to nearby allies.",
+        "Solid for party play where Aura coverage and team defence matter.",
+        "Decent Life and Armour make it usable even as a solo tank shield."
+      ],
+      "tags": ["shield", "aura", "party"],
+      "image_url": "/images/uniques/oriath-vigil.png",
+      "patch_added": "0.5"
+    }
+  ]
 }

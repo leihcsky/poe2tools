@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "POE2 Skill Gems Database — All Active & Support Gems",
   description:
     "Browse every POE2 skill gem: active and support gems with stats, tags, costs, and scaling info. Updated for the latest patch.",
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
   alternates: { canonical: `${BASE_URL}/db/gems` },
   openGraph: {
     title: "POE2 Skill Gems Database — All Active & Support Gems",

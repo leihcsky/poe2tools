@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title,
     description: desc,
-    robots: { index: false, follow: true },
+    robots: { index: true, follow: true },
     alternates: { canonical: `${BASE_URL}/db/gems/${slug}` },
     openGraph: { title, description: desc, url: `${BASE_URL}/db/gems/${slug}`, siteName: "POE2Tools", type: "article" },
     twitter: { title, description: desc, card: "summary_large_image" },

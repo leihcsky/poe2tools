@@ -30,9 +30,9 @@ export default function SiteFooter() {
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           {Object.entries(footerLinks).map(([heading, links]) => (
             <div key={heading}>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
+              <div className="text-xs font-semibold uppercase tracking-wider text-white/50">
                 {heading}
-              </h3>
+              </div>
               <ul className="mt-3 space-y-2">
                 {links.map((link) => (
                   <li key={link.href}>

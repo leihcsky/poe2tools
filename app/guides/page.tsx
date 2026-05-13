@@ -8,14 +8,14 @@ import type { Metadata } from "next";
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
-  title: "POE2 Guides — Patch 0.5 Runes of Aldur, Builds & Beginner Tips",
+  title: { absolute: "POE2 Guides — Patch 0.5, Runes & Tips" },
   description:
-    "POE2 guides for Path of Exile 2 Patch 0.5: Runes of Aldur explained, patch-day prep checklist, beginner first-hours walkthrough, and endgame strategies.",
+    "Path of Exile 2 guides: Runes of Aldur, 0.5 prep checklist, beginner tips, and endgame help. Short reads with clear next steps.",
   alternates: { canonical: "/guides" },
   openGraph: {
-    title: "POE2 Guides — Patch 0.5 Runes of Aldur, Builds & Beginner Tips",
+    title: "POE2 Guides — Patch 0.5, Runes & Tips",
     description:
-      "POE2 guides for Path of Exile 2 Patch 0.5: Runes of Aldur explained, patch-day prep checklist, beginner first-hours walkthrough, and endgame strategies.",
+      "Path of Exile 2 guides: Runes of Aldur, 0.5 prep checklist, beginner tips, and endgame help.",
     url: "/guides",
   },
 };

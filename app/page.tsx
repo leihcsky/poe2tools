@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { listGuideSlugs, readGuide } from "@/lib/guides";
+import GuideCoverImage from "@/components/guides/GuideCoverImage";
 
 export const runtime = "nodejs";
 
@@ -277,10 +277,11 @@ export default async function Home() {
                 >
                   {g.frontmatter.image && (
                     <div className="relative h-28 w-full overflow-hidden bg-white/5">
-                      <Image
+                      <GuideCoverImage
                         src={g.frontmatter.image}
                         alt={g.frontmatter.title}
                         fill
+                        sizes="(max-width: 640px) 100vw, 33vw"
                         className="object-cover transition-transform group-hover:scale-105"
                       />
                     </div>

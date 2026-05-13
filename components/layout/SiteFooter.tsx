@@ -55,6 +55,7 @@ export default function SiteFooter() {
             <span className="text-sm font-semibold text-white/80 tracking-tight">
               poe<span className="text-[#F2BF43]">2</span>tools
             </span>
+            <span className="text-xs text-white/40">© {new Date().getFullYear()} POE2Tools. All rights reserved.</span>
           </div>
           <p className="text-xs text-white/40 text-center sm:text-right">
             POE2Tools is a fan-made project. Not affiliated with or endorsed by Grinding Gear Games.

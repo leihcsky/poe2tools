@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { listGuideSlugs, readGuide } from "@/lib/guides";
 import type { Metadata } from "next";
 import TableOfContents, { type TocItem } from "@/components/guides/TableOfContents";
+import GuideCoverImage from "@/components/guides/GuideCoverImage";
 
 export const runtime = "nodejs";
 export const dynamicParams = false;
@@ -11,6 +11,14 @@ export const dynamicParams = false;
 export async function generateStaticParams() {
   const slugs = await listGuideSlugs();
   return slugs.map((slug) => ({ slug }));
+}
+
+function clampMetaText(s: string, maxLen: number): string {
+  const t = s.trim();
+  if (t.length <= maxLen) return t;
+  const cut = t.slice(0, maxLen - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trim()}…`;
 }
 
 function plainTextFromMarkdown(md: string, maxLen: number): string {
@@ -42,11 +50,12 @@ export async function generateMetadata({
     process.env.SITE_URL ||
     "https://poe2tools.top";
 
-  const title = doc.frontmatter.title;
-  const description =
+  const title = doc.frontmatter.title.trim();
+  const rawDescription =
     doc.frontmatter.excerpt?.trim() ||
-    plainTextFromMarkdown(doc.body, 160) ||
-    "Patch guides, beginner walkthroughs, and endgame strategies for Path of Exile 2.";
+    plainTextFromMarkdown(doc.body, 200) ||
+    "Patch guides and Path of Exile 2 strategies.";
+  const description = clampMetaText(rawDescription, 155);
 
   const keywords = Array.isArray(doc.frontmatter.keywords)
     ? doc.frontmatter.keywords.filter((k) => typeof k === "string")
@@ -56,7 +65,7 @@ export async function generateMetadata({
   const url = `/guides/${slug}`;
 
   return {
-    title,
+    title: { absolute: title },
     description,
     keywords,
     alternates: { canonical: url },
@@ -103,30 +112,23 @@ function extractToc(body: string): TocItem[] {
   const lines = body.split(/\n/g);
   for (const line of lines) {
     const h2 = /^##\s+(.+)$/.exec(line);
-    if (h2) {
-      const text = h2[1].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_~`]/g, "");
-      items.push({ id: slugify(text), text, level: 2 });
-      continue;
-    }
-    const h3 = /^###\s+(.+)$/.exec(line);
-    if (h3) {
-      const text = h3[1].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_~`]/g, "");
-      items.push({ id: slugify(text), text, level: 3 });
-    }
+    if (!h2) continue;
+    const text = h2[1].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_~`]/g, "");
+    items.push({ id: slugify(text), text });
   }
   return items;
 }
 
 function renderInline(text: string): React.ReactNode[] {
-  const nodes: React.ReactNode[] = [];
+  const raw: React.ReactNode[] = [];
   const re = /\[([^\]]+)\]\(([^)]+)\)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = re.exec(text))) {
-    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
+    if (match.index > lastIndex) raw.push(text.slice(lastIndex, match.index));
     const label = match[1];
     const href = match[2];
-    nodes.push(
+    raw.push(
       <a
         key={`${match.index}-${href}`}
         href={href}
@@ -139,8 +141,112 @@ function renderInline(text: string): React.ReactNode[] {
     );
     lastIndex = match.index + match[0].length;
   }
-  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
-  return nodes;
+  if (lastIndex < text.length) raw.push(text.slice(lastIndex));
+
+  const out: React.ReactNode[] = [];
+  let frag = 0;
+  for (let k = 0; k < raw.length; k++) {
+    const n = raw[k];
+    if (typeof n !== "string") {
+      out.push(n);
+      continue;
+    }
+    const parts = n.split(/(\*\*[^*]+\*\*)/g);
+    for (const p of parts) {
+      if (!p) continue;
+      const bold = /^\*\*([^*]+)\*\*$/.exec(p);
+      if (bold) {
+        out.push(
+          <strong
+            key={`em-${frag++}`}
+            className="font-semibold text-zinc-900 dark:text-zinc-50"
+          >
+            {bold[1]}
+          </strong>,
+        );
+      } else {
+        out.push(p);
+      }
+    }
+  }
+  return out;
+}
+
+function parsePipeTableRow(line: string): string[] | null {
+  const t = line.trim();
+  if (!t.startsWith("|") || !t.endsWith("|")) return null;
+  return t
+    .slice(1, -1)
+    .split("|")
+    .map((c) => c.trim());
+}
+
+function isMarkdownTableSeparatorRow(cells: string[]): boolean {
+  return (
+    cells.length > 0 &&
+    cells.every((c) => {
+      const s = c.replace(/\s/g, "");
+      return /^:?-{2,}:?$/.test(s);
+    })
+  );
+}
+
+type ListBranch = { text: string; children: ListBranch[] };
+
+function flatDepthToTree(flat: { depth: number; text: string }[]): ListBranch[] {
+  const result: ListBranch[] = [];
+  const stack: { depth: number; list: ListBranch[] }[] = [{ depth: -1, list: result }];
+  for (const row of flat) {
+    const node: ListBranch = { text: row.text, children: [] };
+    while (stack.length > 1 && row.depth <= stack[stack.length - 1].depth) {
+      stack.pop();
+    }
+    stack[stack.length - 1].list.push(node);
+    stack.push({ depth: row.depth, list: node.children });
+  }
+  return result;
+}
+
+function renderUlBranches(nodes: ListBranch[], depth = 0): React.ReactNode {
+  if (nodes.length === 0) return null;
+  const isNested = depth > 0;
+  return (
+    <ul
+      className={
+        isNested
+          ? "mt-2 list-outside list-[circle] space-y-1.5 border-l-2 border-dashed border-zinc-300/75 pl-4 text-[0.96em] marker:text-zinc-500 dark:border-zinc-600/55 dark:marker:text-zinc-400"
+          : "list-outside list-disc space-y-2.5 pl-7 marker:text-amber-700/80 dark:marker:text-amber-400/75"
+      }
+    >
+      {nodes.map((n, idx) => (
+        <li key={idx} className="pl-0.5 leading-relaxed sm:pl-0">
+          {renderInline(n.text)}
+          {n.children.length > 0 ? renderUlBranches(n.children, depth + 1) : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function renderOlBranches(nodes: ListBranch[], depth = 0): React.ReactNode {
+  if (nodes.length === 0) return null;
+  const isNested = depth > 0;
+  const listStyle =
+    depth === 0
+      ? "list-outside list-decimal space-y-2.5 pl-7 marker:font-medium marker:text-zinc-500 dark:marker:text-zinc-400"
+      : depth === 1
+        ? "mt-2 list-outside space-y-1.5 border-l-2 border-dashed border-zinc-300/75 pl-4 text-[0.96em] [list-style-type:lower-alpha] dark:border-zinc-600/55"
+        : "mt-2 list-outside space-y-1.5 border-l-2 border-dotted border-zinc-300/65 pl-4 text-[0.94em] [list-style-type:lower-roman] dark:border-zinc-600/45";
+  return (
+    <ol className={listStyle}>
+      {nodes.map((n, idx) => (
+        <li key={idx} className="leading-relaxed">
+          {renderInline(n.text)}
+          {n.children.length > 0 ? renderOlBranches(n.children, depth + 1) : null}
+        </li>
+      ))}
+    </ol>
+  );
 }
 
 function Markdown({ body }: { body: string }) {
@@ -160,7 +266,7 @@ function Markdown({ body }: { body: string }) {
       out.push(
         <pre
           key={`code-${i}`}
-          className="mt-6 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-100"
+          className="mt-8 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs leading-relaxed text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-100"
         >
           <code className={lang ? `language-${lang}` : undefined}>{code}</code>
         </pre>,
@@ -172,17 +278,78 @@ function Markdown({ body }: { body: string }) {
     const img = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line.trim());
     if (img) {
       out.push(
-        <div key={`img-${i}`} className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
-          <Image
-            src={img[2]}
-            alt={img[1]}
-            width={1200}
-            height={630}
-            className="h-auto w-full"
-          />
+        <div key={`img-${i}`} className="mt-8 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
+          <GuideCoverImage src={img[2]} alt={img[1] || ""} width={1200} height={630} />
         </div>,
       );
       i += 1;
+      continue;
+    }
+
+    if (/^-{3,}$|^\*{3,}$|^_{3,}$/.test(line.trim())) {
+      out.push(
+        <hr
+          key={`hr-${i}`}
+          className="my-10 border-0 border-t border-zinc-200 dark:border-zinc-800"
+        />,
+      );
+      i += 1;
+      continue;
+    }
+
+    const tableStart = parsePipeTableRow(line);
+    if (tableStart) {
+      const rows: string[][] = [];
+      let j = i;
+      while (j < lines.length) {
+        const parsed = parsePipeTableRow(lines[j]);
+        if (!parsed) break;
+        if (isMarkdownTableSeparatorRow(parsed)) {
+          j += 1;
+          continue;
+        }
+        rows.push(parsed);
+        j += 1;
+      }
+      if (rows.length > 0) {
+        const [header, ...body] = rows;
+        out.push(
+          <div
+            key={`tbl-${i}`}
+            className="mt-8 overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950/40"
+          >
+            <table className="min-w-full divide-y divide-zinc-200 text-left text-sm leading-relaxed dark:divide-zinc-800">
+              <thead>
+                <tr>
+                  {header.map((cell, hi) => (
+                    <th
+                      key={hi}
+                      scope="col"
+                      className="whitespace-nowrap bg-zinc-50 px-4 py-3 font-semibold text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-100"
+                    >
+                      {renderInline(cell)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 text-zinc-700 dark:divide-zinc-800/80 dark:text-zinc-300">
+                {body.map((row, ri) => (
+                  <tr key={ri}>
+                    {header.map((_, ci) => (
+                      <td key={ci} className="px-4 py-3.5 align-top">
+                        {renderInline(row[ci] ?? "")}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>,
+        );
+        i = j;
+      } else {
+        i += 1;
+      }
       continue;
     }
 
@@ -191,7 +358,7 @@ function Markdown({ body }: { body: string }) {
       out.push(
         <h1
           key={`h1-${i}`}
-          className="mt-6 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50"
+          className="mt-10 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50"
         >
           {renderInline(h1[1])}
         </h1>,
@@ -207,7 +374,7 @@ function Markdown({ body }: { body: string }) {
         <h2
           key={`h2-${i}`}
           id={slugify(headingText)}
-          className="mt-6 scroll-mt-24 text-xl font-semibold text-zinc-950 dark:text-zinc-50"
+          className="mt-14 scroll-mt-28 text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50"
         >
           {renderInline(h2[1])}
         </h2>,
@@ -223,7 +390,7 @@ function Markdown({ body }: { body: string }) {
         <h3
           key={`h3-${i}`}
           id={slugify(headingText)}
-          className="mt-6 scroll-mt-24 text-base font-semibold text-zinc-950 dark:text-zinc-50"
+          className="mt-8 scroll-mt-28 border-l-[3px] border-amber-500/55 pl-4 text-[0.98rem] font-semibold leading-snug text-zinc-800 dark:border-amber-400/50 dark:text-zinc-200"
         >
           {renderInline(h3[1])}
         </h3>,
@@ -232,38 +399,75 @@ function Markdown({ body }: { body: string }) {
       continue;
     }
 
-    if (/^\s*-\s+/.test(line)) {
-      const items: string[] = [];
+    if (/^\s*>\s?/.test(line)) {
+      const quotes: string[] = [];
       let j = i;
-      while (j < lines.length && /^\s*-\s+/.test(lines[j])) {
-        items.push(lines[j].replace(/^\s*-\s+/, ""));
+      while (j < lines.length && /^\s*>\s?/.test(lines[j])) {
+        quotes.push(lines[j].replace(/^\s*>\s?/, ""));
         j += 1;
       }
       out.push(
-        <ul key={`ul-${i}`} className="mt-4 list-disc pl-6 text-sm leading-7 text-zinc-700 dark:text-zinc-300">
-          {items.map((t, idx) => (
-            <li key={idx}>{renderInline(t)}</li>
+        <blockquote
+          key={`bq-${i}`}
+          className="mt-8 border-l-[3px] border-amber-500/65 bg-amber-500/[0.07] py-4 pl-5 pr-4 text-[15px] leading-[1.75] text-zinc-700 dark:border-amber-400/55 dark:bg-amber-500/[0.09] dark:text-zinc-200"
+        >
+          {quotes.map((q, qi) => (
+            <p key={qi} className={qi > 0 ? "mt-3" : ""}>
+              {renderInline(q)}
+            </p>
           ))}
-        </ul>,
+        </blockquote>,
       );
       i = j;
       continue;
     }
 
-    if (/^\s*\d+\.\s+/.test(line)) {
-      const items: string[] = [];
+    if (/^\s*-\s+/.test(line)) {
+      const flat: { depth: number; text: string }[] = [];
       let j = i;
-      while (j < lines.length && /^\s*\d+\.\s+/.test(lines[j])) {
-        items.push(lines[j].replace(/^\s*\d+\.\s+/, ""));
+      while (j < lines.length) {
+        const m = /^(\s*)-\s+(.*)$/.exec(lines[j]);
+        if (!m) break;
+        const indent = m[1].replace(/\t/g, "  ").length;
+        const depth = Math.max(0, Math.floor(indent / 2));
+        flat.push({ depth, text: m[2].trimEnd() });
         j += 1;
       }
-      out.push(
-        <ol key={`ol-${i}`} className="mt-4 list-decimal pl-6 text-sm leading-7 text-zinc-700 dark:text-zinc-300">
-          {items.map((t, idx) => (
-            <li key={idx}>{renderInline(t)}</li>
-          ))}
-        </ol>,
-      );
+      if (flat.length > 0) {
+        out.push(
+          <div
+            key={`ul-${i}`}
+            className="guide-md-list mt-6 text-[15px] leading-relaxed text-zinc-700 dark:text-zinc-300"
+          >
+            {renderUlBranches(flatDepthToTree(flat), 0)}
+          </div>,
+        );
+      }
+      i = j;
+      continue;
+    }
+
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const flat: { depth: number; text: string }[] = [];
+      let j = i;
+      while (j < lines.length) {
+        const m = /^(\s*)\d+\.\s+(.*)$/.exec(lines[j]);
+        if (!m) break;
+        const indent = m[1].replace(/\t/g, "  ").length;
+        const depth = Math.max(0, Math.floor(indent / 2));
+        flat.push({ depth, text: m[2].trimEnd() });
+        j += 1;
+      }
+      if (flat.length > 0) {
+        out.push(
+          <div
+            key={`ol-${i}`}
+            className="guide-md-list mt-6 text-[15px] leading-relaxed text-zinc-700 dark:text-zinc-300"
+          >
+            {renderOlBranches(flatDepthToTree(flat), 0)}
+          </div>,
+        );
+      }
       i = j;
       continue;
     }
@@ -275,20 +479,34 @@ function Markdown({ body }: { body: string }) {
 
     const para: string[] = [];
     let j = i;
-    while (j < lines.length && lines[j].trim() && !lines[j].startsWith("#") && !lines[j].startsWith("```") && !/^\s*-\s+/.test(lines[j]) && !/^\s*\d+\.\s+/.test(lines[j])) {
+    while (
+      j < lines.length &&
+      lines[j].trim() &&
+      !lines[j].startsWith("#") &&
+      !lines[j].startsWith("```") &&
+      !/^\s*-\s+/.test(lines[j]) &&
+      !/^\s*\d+\.\s+/.test(lines[j]) &&
+      !/^\s*>\s?/.test(lines[j]) &&
+      !parsePipeTableRow(lines[j]) &&
+      !/^-{3,}$|^\*{3,}$|^_{3,}$/.test(lines[j].trim())
+    ) {
       para.push(lines[j]);
       j += 1;
     }
 
     out.push(
-      <p key={`p-${i}`} className="mt-4 text-sm leading-7 text-zinc-700 dark:text-zinc-300">
+      <p key={`p-${i}`} className="mt-6 text-[15px] leading-[1.75] text-zinc-700 dark:text-zinc-300">
         {renderInline(para.join(" "))}
       </p>,
     );
     i = j;
   }
 
-  return <div>{out}</div>;
+  return (
+    <div className="max-w-[48rem] [&>:first-child]:mt-0 [&>h2+p]:mt-4 [&>h3+p]:mt-3 [&>h2+blockquote]:mt-4 [&>h3+blockquote]:mt-3 [&>h2+.guide-md-list]:mt-4 [&>h3+.guide-md-list]:mt-3">
+      {out}
+    </div>
+  );
 }
 
 export default async function GuidePage({
@@ -309,10 +527,12 @@ export default async function GuidePage({
     "@context": "https://schema.org",
     "@type": "Article",
     headline: doc.frontmatter.title,
-    description:
+    description: clampMetaText(
       doc.frontmatter.excerpt?.trim() ||
-      plainTextFromMarkdown(doc.body, 180) ||
-      undefined,
+        plainTextFromMarkdown(doc.body, 200) ||
+        "Path of Exile 2 guides and patch notes.",
+      160,
+    ),
     image: doc.frontmatter.image ? `${siteUrl}${doc.frontmatter.image}` : undefined,
     datePublished: doc.frontmatter.date,
     dateModified: doc.frontmatter.date,
@@ -340,7 +560,7 @@ export default async function GuidePage({
   const more = relatedDocs
     .filter((d): d is NonNullable<typeof d> => Boolean(d))
     .sort((a, b) => new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime())
-    .slice(0, 6);
+    .slice(0, 2);
 
   const tocItems = extractToc(doc.body);
 
@@ -408,22 +628,23 @@ export default async function GuidePage({
 
               {doc.frontmatter.image ? (
                 <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                  <Image
+                  <GuideCoverImage
                     src={doc.frontmatter.image}
                     alt={doc.frontmatter.title}
                     width={1200}
                     height={630}
-                    className="h-auto w-full"
                   />
                 </div>
               ) : null}
 
-              <Markdown body={doc.body} />
+              <div className={doc.frontmatter.image ? "mt-6" : "mt-4"}>
+                <Markdown body={doc.body} />
+              </div>
             </section>
           </article>
 
           {/* Table of Contents sidebar */}
-          <aside className="hidden xl:block w-56 shrink-0">
+          <aside className="hidden w-56 shrink-0 self-start xl:sticky xl:top-24 xl:z-10 xl:block">
             <TableOfContents items={tocItems} />
           </aside>
         </div>
@@ -460,10 +681,11 @@ export default async function GuidePage({
                   >
                     {g.frontmatter.image && (
                       <div className="relative h-32 w-full overflow-hidden bg-white/5">
-                        <Image
+                        <GuideCoverImage
                           src={g.frontmatter.image}
                           alt={g.frontmatter.title}
                           fill
+                          sizes="(max-width: 640px) 100vw, 50vw"
                           className="object-cover transition-transform group-hover:scale-105"
                         />
                       </div>

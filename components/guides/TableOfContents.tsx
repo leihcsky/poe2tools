@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 export type TocItem = {
   id: string;
   text: string;
-  level: 2 | 3;
 };
 
 export default function TableOfContents({ items }: { items: TocItem[] }) {
@@ -36,11 +35,11 @@ export default function TableOfContents({ items }: { items: TocItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="Table of Contents" className="hidden xl:block">
-      <div className="sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03] p-4">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-white/50">
+    <nav aria-label="Table of Contents">
+      <div className="max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03] p-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-white/50">
           On this page
-        </h4>
+        </div>
         <ul className="mt-3 space-y-1">
           {items.map((item) => (
             <li key={item.id}>
@@ -48,10 +47,9 @@ export default function TableOfContents({ items }: { items: TocItem[] }) {
                 href={`#${item.id}`}
                 className={[
                   "p2-nav-link block rounded-md px-2 py-1 text-xs leading-relaxed transition-colors",
-                  item.level === 3 ? "pl-4" : "",
                   activeId === item.id
                     ? "bg-[#F2BF43]/10 text-[#F2BF43] font-medium"
-                    : "text-white/60 hover:text-white/90 hover:bg-white/5",
+                    : "text-white/60 hover:bg-white/5 hover:text-white/90",
                 ].join(" ")}
               >
                 {item.text}

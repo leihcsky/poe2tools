@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="sw-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="0.55" stop-color="#14532d"/>
+      <stop offset="1" stop-color="#0b1220"/>
+    </linearGradient>
+    <linearGradient id="sw-accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="0.5" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+    <filter id="sw-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#sw-bg)"/>
+  <rect x="72" y="72" width="1056" height="486" rx="28" fill="#0b1220" opacity="0.72" filter="url(#sw-shadow)"/>
+  <rect x="96" y="96" width="1008" height="438" rx="22" fill="#0f172a" opacity="0.9"/>
+  <rect x="96" y="96" width="1008" height="10" fill="url(#sw-accent)"/>
+
+  <text x="130" y="168" fill="#a7f3d0" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="600" letter-spacing="1.4">
+    PATH OF EXILE 2 - ASCENDANCY
+  </text>
+  <text x="130" y="248" fill="#f1f5f9" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">
+    Spirit Walker
+  </text>
+  <text x="130" y="302" fill="#cbd5e1" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="500">
+    Stag / Owl / Bear / Boss companions
+  </text>
+
+  <g transform="translate(130 360)" fill="none" stroke="#64748b" stroke-width="2">
+    <path d="M0 36 L20 8 L40 36 L20 28 Z" fill="#34d399" fill-opacity="0.25" stroke="#34d399"/>
+    <circle cx="90" cy="22" r="14" fill="#a78bfa" fill-opacity="0.25" stroke="#a78bfa"/>
+    <path d="M160 8 Q188 4 200 36 L152 36 Q164 14 160 8" fill="#fbbf24" fill-opacity="0.2" stroke="#fbbf24"/>
+  </g>
+  <text x="130" y="460" fill="#94a3b8" font-family="Arial, Helvetica, sans-serif" font-size="17">
+    Player-focused ascendancy primer for Patch 0.5
+  </text>
+</svg>

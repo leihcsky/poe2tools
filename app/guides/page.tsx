@@ -28,9 +28,18 @@ export default async function GuidesIndexPage() {
   const fmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
 
   const docs = await Promise.all(slugs.map((s) => readGuide(s)));
-  const items: GuideListItem[] = docs
+  const publishTime = (iso: string) => {
+    const t = new Date(iso).getTime();
+    return Number.isFinite(t) ? t : 0;
+  };
+  const sorted = docs
     .filter((d): d is NonNullable<typeof d> => Boolean(d))
-    .map((d) => ({
+    .sort(
+      (a, b) =>
+        publishTime(b.frontmatter.date) - publishTime(a.frontmatter.date),
+    );
+
+  const items: GuideListItem[] = sorted.map((d) => ({
       slug: d.slug,
       title: d.frontmatter.title,
       excerpt: d.frontmatter.excerpt ?? "",

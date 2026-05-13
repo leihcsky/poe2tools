@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import SiteFooter from "@/components/layout/SiteFooter";
@@ -19,6 +19,11 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.SITE_URL ||
   "https://poe2tools.top";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://poe2tools.top
+
+# Sitemaps
+Sitemap: https://poe2tools.top/sitemap.xml

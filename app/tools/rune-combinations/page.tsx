@@ -96,8 +96,21 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function RuneCombinationsPage() {
+function firstQueryParam(
+  v: string | string[] | undefined,
+): string | undefined {
+  if (v === undefined) return undefined;
+  return Array.isArray(v) ? v[0] : v;
+}
+
+export default async function RuneCombinationsPage(props: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const runes = await loadRunes();
+  const raw =
+    props.searchParams != null ? await props.searchParams : {};
+  const initialUrlIds = firstQueryParam(raw.ids);
+  const initialUrlGoal = firstQueryParam(raw.goal);
 
   const softwareJsonLd = {
     "@context": "https://schema.org",
@@ -247,7 +260,11 @@ export default async function RuneCombinationsPage() {
               </div>
             }
           >
-            <RuneCalculatorWidget runes={runes} />
+            <RuneCalculatorWidget
+              runes={runes}
+              initialUrlIds={initialUrlIds}
+              initialUrlGoal={initialUrlGoal}
+            />
           </Suspense>
         </section>
 

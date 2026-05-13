@@ -316,7 +316,7 @@ function Markdown({ body }: { body: string }) {
         out.push(
           <div
             key={`tbl-${i}`}
-            className="mt-8 overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950/40"
+            className="mt-8 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950"
           >
             <table className="min-w-full divide-y divide-zinc-200 text-left text-sm leading-relaxed dark:divide-zinc-800">
               <thead>
@@ -325,14 +325,14 @@ function Markdown({ body }: { body: string }) {
                     <th
                       key={hi}
                       scope="col"
-                      className="whitespace-nowrap bg-zinc-50 px-4 py-3 font-semibold text-zinc-900 dark:bg-zinc-900/60 dark:text-zinc-100"
+                      className="whitespace-nowrap bg-zinc-200 px-4 py-3 font-semibold text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100"
                     >
                       {renderInline(cell)}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 text-zinc-700 dark:divide-zinc-800/80 dark:text-zinc-300">
+              <tbody className="divide-y divide-zinc-200 text-zinc-800 dark:divide-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
                 {body.map((row, ri) => (
                   <tr key={ri}>
                     {header.map((_, ci) => (

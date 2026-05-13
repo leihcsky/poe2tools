@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 
 const MAX_SLOTS = 8;
@@ -50,6 +50,9 @@ type Props = {
     slot_cost: number;
     masterwork: boolean;
   }>;
+  /** Comma-separated rune ids from the URL (from server `searchParams`), avoids `useSearchParams` hydration issues on some mobile WebViews. */
+  initialUrlIds?: string;
+  initialUrlGoal?: string;
 };
 
 type RuneRecordInput = Props["runes"][number];
@@ -131,9 +134,12 @@ function diffLoadout(suggestedIds: string[], baseIds: string[]) {
   return { added, removed };
 }
 
-export default function RuneCalculatorWidget({ runes }: Props) {
+export default function RuneCalculatorWidget({
+  runes,
+  initialUrlIds,
+  initialUrlGoal,
+}: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // 1. Data Processing
   const allRunes = useMemo(() => {
@@ -160,6 +166,12 @@ export default function RuneCalculatorWidget({ runes }: Props) {
   const [result, setResult] = useState<ApiResponse | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
+  const appliedInitialUrlRef = useRef(false);
+
+  useEffect(() => {
+    appliedInitialUrlRef.current = false;
+  }, [initialUrlIds, initialUrlGoal]);
+
   // 3. Helpers
   const syncToUrl = useCallback((ids: string[], g: Goal) => {
     const params = new URLSearchParams();
@@ -170,18 +182,48 @@ export default function RuneCalculatorWidget({ runes }: Props) {
   }, [router]);
 
   useEffect(() => {
-    if (allRunes.length === 0) return;
+    if (allRunes.length === 0 || appliedInitialUrlRef.current) return;
+    appliedInitialUrlRef.current = true;
+    if (initialUrlIds && byId.size > 0) {
+      const parsed = initialUrlIds
+        .split(",")
+        .filter((id) => byId.has(id))
+        .slice(0, MAX_SLOTS);
+      if (parsed.length > 0) setSelectedIds(parsed);
+    }
+    if (
+      initialUrlGoal === "loot" ||
+      initialUrlGoal === "challenge" ||
+      initialUrlGoal === "mapping"
+    ) {
+      setGoal(initialUrlGoal);
+    }
+  }, [allRunes.length, initialUrlIds, initialUrlGoal, byId]);
 
-    const idsStr = searchParams.get("ids");
-    if (idsStr && byId.size > 0) {
-      const parsed = idsStr.split(",").filter((id) => byId.has(id));
-      setSelectedIds(parsed.slice(0, MAX_SLOTS));
+  useEffect(() => {
+    function syncFromUrl() {
+      if (allRunes.length === 0) return;
+      const sp = new URLSearchParams(window.location.search);
+      const idsStr = sp.get("ids");
+      if (idsStr) {
+        const parsed = idsStr
+          .split(",")
+          .filter((id) => byId.has(id))
+          .slice(0, MAX_SLOTS);
+        setSelectedIds(parsed);
+      } else {
+        setSelectedIds([]);
+      }
+      const g = sp.get("goal");
+      if (g === "loot" || g === "challenge" || g === "mapping") {
+        setGoal(g);
+      } else {
+        setGoal("mapping");
+      }
     }
-    const g = searchParams.get("goal");
-    if (g === "loot" || g === "challenge" || g === "mapping") {
-      setGoal(g as Goal);
-    }
-  }, [searchParams, byId, allRunes.length, MAX_SLOTS]);
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, [allRunes.length, byId]);
 
   // 5. Actions
   function toggleRune(id: string) {

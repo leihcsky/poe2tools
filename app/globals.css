@@ -47,7 +47,8 @@ body {
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(10px);
+  /* No backdrop-filter: several mobile WebViews (incl. some Harmony builds) drop hit-testing on
+     descendants while blur is on — anchors outside the panel still work, buttons inside do not. */
 }
 
 .p2-popover {
@@ -159,10 +160,6 @@ a.p2-cta-primary:hover {
 
 .dark .dark\:bg-black {
   background-color: var(--background) !important;
-}
-
-.dark .dark\:bg-\[\#070b15\]\/70 {
-  background-color: rgba(23, 18, 51, 0.72) !important;
 }
 
 .dark .dark\:bg-zinc-950 {

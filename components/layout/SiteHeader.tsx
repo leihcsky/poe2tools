@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -279,7 +279,9 @@ function Menu({
           className={[
             "absolute top-full z-[200] mt-2 p2-popover p-4 transition-opacity duration-150",
             align === "right" ? "right-0" : "left-0",
-            isOpen ? "visible opacity-100" : "invisible opacity-0",
+            isOpen
+              ? "visible pointer-events-auto opacity-100"
+              : "invisible pointer-events-none opacity-0",
           ].join(" ")}
           style={{ width: `min(${maxWidth}, calc(100dvw - 48px))` }}
           onClickCapture={onClose}
@@ -295,15 +297,41 @@ export default function SiteHeader() {
   const patchVersion = process.env.NEXT_PUBLIC_PATCH_VERSION ?? "0.5";
   const pathname = usePathname();
   const [openId, setOpenId] = useState<string | null>(null);
-  const closeMenus = useCallback(() => setOpenId(null), []);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSection, setMobileSection] = useState<"tools" | "guides" | "db" | null>(null);
+  const prevPathnameRef = useRef<string | null>(null);
+
+  const closeMenus = () => setOpenId(null);
 
   useEffect(() => {
     const t = setTimeout(() => setOpenId(null), 0);
     return () => clearTimeout(t);
   }, [pathname]);
 
+  useEffect(() => {
+    if (prevPathnameRef.current !== null && prevPathnameRef.current !== pathname) {
+      setMobileOpen(false);
+      setMobileSection(null);
+    }
+    prevPathnameRef.current = pathname;
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mobileOpen]);
+
   return (
-    <header className="site-header sticky top-0 z-[150] w-full border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-[#070b15]/70">
+    <header className="site-header sticky top-0 z-[150] w-full border-b border-white/10 bg-[#171233]">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
         <Link
           href="/"
@@ -317,7 +345,7 @@ export default function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+        <nav className="hidden items-center gap-1 text-sm text-zinc-700 dark:text-zinc-300 sm:flex">
           <NavLink href="/" pathname={pathname} onNavigate={closeMenus}>
             <IconHome className="h-4 w-4" />
             Home
@@ -541,13 +569,258 @@ export default function SiteHeader() {
           </Menu>
         </nav>
 
-        <div className="hidden items-center gap-2 sm:flex">
-          <div className="hidden items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 md:flex">
-            <IconSearch className="h-4 w-4" />
-            Search…
+        <div className="relative z-[160] flex items-center gap-2">
+          <button
+            type="button"
+            className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer touch-manipulation select-none items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/85 [-webkit-tap-highlight-color:transparent] hover:bg-white/[0.06] active:bg-white/[0.08] sm:hidden"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((v) => !v)}
+          >
+            <span className="sr-only">Menu</span>
+            <svg
+              viewBox="0 0 24 24"
+              className="pointer-events-none h-5 w-5"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                d="M4 6.5h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 5h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 5h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z"
+              />
+            </svg>
+          </button>
+
+          <div className="hidden items-center gap-2 sm:flex">
+            <div className="hidden items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 md:flex">
+              <IconSearch className="h-4 w-4" />
+              Search…
+            </div>
           </div>
         </div>
       </div>
+
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-[9999] sm:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Site menu"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 min-h-[100dvh] cursor-default bg-black/55"
+            aria-label="Close menu"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-4 pt-3 sm:pt-4">
+            <div className="pointer-events-auto mt-14 w-full max-w-lg pb-8">
+              <div className="p2-popover p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-white/55">
+                        Menu
+                      </div>
+                      <button
+                        type="button"
+                        className="touch-manipulation rounded-lg px-2 py-1 text-xs text-white/70 hover:bg-white/5 hover:text-white/90"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Link
+                        href="/"
+                        className="p2-nav-link touch-manipulation rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/90 hover:bg-white/[0.06]"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Home
+                      </Link>
+                      <Link
+                        href="/guides"
+                        className="p2-nav-link touch-manipulation rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/90 hover:bg-white/[0.06]"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Guides
+                      </Link>
+                      <Link
+                        href="/db/gems"
+                        className="p2-nav-link touch-manipulation rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/90 hover:bg-white/[0.06]"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Gems
+                      </Link>
+                      <Link
+                        href="/db/runes"
+                        className="p2-nav-link touch-manipulation rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/90 hover:bg-white/[0.06]"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Runes
+                      </Link>
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                      <button
+                        type="button"
+                        className="touch-manipulation flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-sm text-white/90 hover:bg-white/[0.06]"
+                        onClick={() =>
+                          setMobileSection((v) => (v === "tools" ? null : "tools"))
+                        }
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <IconTools className="h-4 w-4" />
+                          Tools
+                        </span>
+                        <IconChevron
+                          className={[
+                            "h-4 w-4 transition-transform",
+                            mobileSection === "tools" ? "rotate-180" : "",
+                          ].join(" ")}
+                        />
+                      </button>
+                      {mobileSection === "tools" ? (
+                        <div className="rounded-xl border border-white/10 bg-white/[0.05] p-2">
+                          <Link
+                            href="/tools"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            All tools
+                          </Link>
+                          <Link
+                            href="/tools/rune-combinations"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Rune combos ({patchVersion})
+                          </Link>
+                          <Link
+                            href="/tools/runic-ward-calc"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Runic Ward calc ({patchVersion})
+                          </Link>
+                        </div>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        className="touch-manipulation flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-sm text-white/90 hover:bg-white/[0.06]"
+                        onClick={() =>
+                          setMobileSection((v) => (v === "guides" ? null : "guides"))
+                        }
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <IconCompass className="h-4 w-4" />
+                          Guides
+                        </span>
+                        <IconChevron
+                          className={[
+                            "h-4 w-4 transition-transform",
+                            mobileSection === "guides" ? "rotate-180" : "",
+                          ].join(" ")}
+                        />
+                      </button>
+                      {mobileSection === "guides" ? (
+                        <div className="rounded-xl border border-white/10 bg-white/[0.05] p-2">
+                          <Link
+                            href="/guides"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            All guides
+                          </Link>
+                          <Link
+                            href="/guides?cat=beginner"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Beginner
+                          </Link>
+                          <Link
+                            href="/guides?cat=patch"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Patch
+                          </Link>
+                          <Link
+                            href="/guides?cat=economy"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Economy
+                          </Link>
+                        </div>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        className="touch-manipulation flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-sm text-white/90 hover:bg-white/[0.06]"
+                        onClick={() =>
+                          setMobileSection((v) => (v === "db" ? null : "db"))
+                        }
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <IconDatabase className="h-4 w-4" />
+                          Database
+                        </span>
+                        <IconChevron
+                          className={[
+                            "h-4 w-4 transition-transform",
+                            mobileSection === "db" ? "rotate-180" : "",
+                          ].join(" ")}
+                        />
+                      </button>
+                      {mobileSection === "db" ? (
+                        <div className="rounded-xl border border-white/10 bg-white/[0.05] p-2">
+                          <Link
+                            href="/db/gems"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Skill gems
+                          </Link>
+                          <Link
+                            href="/db/runes"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Runes
+                          </Link>
+                          <Link
+                            href="/db/uniques"
+                            className="p2-nav-link touch-manipulation block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white/95"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Unique items
+                          </Link>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <Link
+                        href="/about"
+                        className="p2-nav-link touch-manipulation rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 hover:bg-white/[0.06] hover:text-white/95"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        About
+                      </Link>
+                      <Link
+                        href="/contact"
+                        className="p2-nav-link touch-manipulation rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 hover:bg-white/[0.06] hover:text-white/95"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        Contact
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -9,7 +9,7 @@ keywords:
   - "poe2 0.5 what to prepare"
 ---
 
-If you’re Googling **poe2 0.5 what to prepare**, you probably want something simple and actionable—not vague advice like “read patch notes.” This checklist is designed to help you hit patch day ready, even if you’re a casual player with limited time.
+Patch 0.5 is easier to navigate with something **simple and actionable**—not vague advice like “read patch notes.” This checklist is built to help you hit patch day ready, even if you’re a casual player with limited time.
 
 The goal is to reduce patch-day chaos, avoid bad early choices, and start progressing smoothly.
 

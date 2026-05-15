@@ -9,11 +9,11 @@ keywords:
   - "poe2 0.5 beginners guide"
 ---
 
-If you’re searching for a **poe2 0.5 beginners guide**, you’re in the right place. Patch 0.5 (“Return of the Ancients”) brings new systems (notably **Runes of Aldur**) and a lot of returning and brand-new players. This guide is written to be *useful*, not motivational: it’s a set of concrete decisions and checklists you can follow so you don’t get stuck.
+Patch 0.5 (“Return of the Ancients”) adds new systems—notably **Runes of Aldur**—and draws both returning and brand-new players. This guide is written to be *useful*, not motivational: concrete decisions and checklists you can follow so you don’t get stuck.
 
 This is not a “best build” list. It’s a practical onboarding map so you always know what to do next, and what to fix when progress slows down.
 
-Use this **POE2 0.5 beginners guide** like a checklist: follow the sections top to bottom, and when you hit a wall, jump straight to the “rescue checklist” and the rune workflow.
+Treat it like a checklist: follow the sections top to bottom, and when you hit a wall, jump straight to the “rescue checklist” and the rune workflow.
 
 ## Quick start: your first hours (do this, skip the rest)
 

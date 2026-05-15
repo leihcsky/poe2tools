@@ -13,7 +13,7 @@ keywords:
   - "verisium"
 ---
 
-If you searched **poe2 runes of aldur explained**, you probably want two things:
+Most players tackling **Runes of Aldur** want two things from a guide:
 
 1. A clear explanation of what the system is doing (not vague “more loot, more danger” talk).
 2. A practical way to use it without turning your runs into a brick wall.
